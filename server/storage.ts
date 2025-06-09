@@ -24,6 +24,15 @@ export interface IStorage {
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
   
+  // Email/password authentication
+  getUserByEmail(email: string): Promise<User | undefined>;
+  createUserWithPassword(userData: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }): Promise<User>;
+  
   // File operations
   createFile(file: InsertFile): Promise<File>;
   getFile(id: number): Promise<File | undefined>;
@@ -63,6 +72,37 @@ export class DatabaseStorage implements IStorage {
           ...userData,
           updatedAt: new Date(),
         },
+      })
+      .returning();
+    return user;
+  }
+
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async createUserWithPassword(userData: {
+    email: string;
+    password: string;
+    firstName?: string;
+    lastName?: string;
+  }): Promise<User> {
+    const { v4: uuidv4 } = await import('uuid');
+    const bcrypt = await import('bcrypt');
+    
+    const hashedPassword = await bcrypt.hash(userData.password, 12);
+    const userId = uuidv4();
+    
+    const [user] = await db
+      .insert(users)
+      .values({
+        id: userId,
+        email: userData.email,
+        password: hashedPassword,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        authProvider: 'email',
       })
       .returning();
     return user;

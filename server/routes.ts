@@ -2,6 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { authenticateToken, type AuthenticatedRequest } from "./auth";
 import { insertFileSchema, insertUserPreferencesSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
@@ -37,9 +38,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+  app.get('/api/auth/user', authenticateToken, async (req: AuthenticatedRequest, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user!.id;
       const user = await storage.getUser(userId);
       res.json(user);
     } catch (error) {
@@ -48,8 +49,88 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email/password authentication routes
+  app.post('/api/auth/register', async (req, res) => {
+    try {
+      const { email, password, firstName, lastName } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      // Check if user already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "User already exists with this email" });
+      }
+
+      // Create new user
+      const user = await storage.createUserWithPassword({
+        email,
+        password,
+        firstName,
+        lastName,
+      });
+
+      // Generate JWT token
+      const jwt = await import('jsonwebtoken');
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.SESSION_SECRET!,
+        { expiresIn: '7d' }
+      );
+
+      res.json({
+        user: { ...user, password: undefined }, // Don't send password back
+        token,
+      });
+    } catch (error) {
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Failed to create account" });
+    }
+  });
+
+  app.post('/api/auth/login', async (req, res) => {
+    try {
+      const { email, password } = req.body;
+      
+      if (!email || !password) {
+        return res.status(400).json({ message: "Email and password are required" });
+      }
+
+      // Find user
+      const user = await storage.getUserByEmail(email);
+      if (!user || !user.password) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Verify password
+      const bcrypt = await import('bcrypt');
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return res.status(401).json({ message: "Invalid email or password" });
+      }
+
+      // Generate JWT token
+      const jwt = await import('jsonwebtoken');
+      const token = jwt.sign(
+        { userId: user.id, email: user.email },
+        process.env.SESSION_SECRET!,
+        { expiresIn: '7d' }
+      );
+
+      res.json({
+        user: { ...user, password: undefined }, // Don't send password back
+        token,
+      });
+    } catch (error) {
+      console.error("Login error:", error);
+      res.status(500).json({ message: "Failed to sign in" });
+    }
+  });
+
   // File upload endpoint
-  app.post('/api/files/upload', isAuthenticated, upload.array('files'), async (req: any, res) => {
+  app.post('/api/files/upload', authenticateToken, upload.array('files'), async (req: AuthenticatedRequest, res) => {
     try {
       const userId = req.user.claims.sub;
       const files = req.files as Express.Multer.File[];
