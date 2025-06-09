@@ -80,7 +80,7 @@ export default function Features() {
           </div>
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-600 dark:text-gray-400">
-              Welcome, {user?.firstName || user?.email}
+              Welcome, {user?.firstName || user?.email || 'User'}
             </span>
             <Link href="/upload">
               <Button className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700">

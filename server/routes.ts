@@ -47,12 +47,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (token) {
         const jwt = await import('jsonwebtoken');
         try {
-          const decoded = jwt.verify(token, process.env.SESSION_SECRET!) as any;
+          console.log('Verifying token:', token.substring(0, 20) + '...');
+          const decoded = jwt.default.verify(token, process.env.SESSION_SECRET!) as any;
+          console.log('Token decoded successfully:', decoded);
           const user = await storage.getUser(decoded.userId);
+          console.log('User found:', user ? 'Yes' : 'No');
           if (user) {
             return res.json(user);
           }
         } catch (jwtError) {
+          console.log('JWT verification error:', jwtError);
           // Token invalid, continue to session check
         }
       }
@@ -163,7 +167,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (token) {
         const jwt = await import('jsonwebtoken');
         try {
-          const decoded = jwt.verify(token, process.env.SESSION_SECRET!) as any;
+          const decoded = jwt.default.verify(token, process.env.SESSION_SECRET!) as any;
           userId = decoded.userId;
         } catch (jwtError) {
           // Token invalid, continue to session check
