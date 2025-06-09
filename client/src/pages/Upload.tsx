@@ -15,7 +15,7 @@ import { motion } from "framer-motion";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { 
-  Upload, 
+  Upload as UploadIcon, 
   Settings, 
   ChevronDown, 
   Wand2,
@@ -173,7 +173,7 @@ export default function Upload() {
           <Card className="glass border-0">
             <CardHeader>
               <CardTitle className="flex items-center">
-                <Upload className="mr-2 h-5 w-5" />
+                <UploadIcon className="mr-2 h-5 w-5" />
                 File Upload
               </CardTitle>
             </CardHeader>
@@ -197,7 +197,7 @@ export default function Upload() {
                       >
                         <div className="flex items-center space-x-3">
                           <div className="w-10 h-10 bg-primary/20 rounded-lg flex items-center justify-center">
-                            <Upload className="h-5 w-5 text-primary" />
+                            <UploadIcon className="h-5 w-5 text-primary" />
                           </div>
                           <div>
                             <p className="font-medium">{file.originalName}</p>
