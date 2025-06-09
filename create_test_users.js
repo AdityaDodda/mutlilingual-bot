@@ -1,6 +1,9 @@
-import { Pool } from '@neondatabase/serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import bcrypt from 'bcrypt';
 import { v4 as uuidv4 } from 'uuid';
+import ws from 'ws';
+
+neonConfig.webSocketConstructor = ws;
 
 async function createTestUsers() {
   const pool = new Pool({ connectionString: process.env.DATABASE_URL });
