@@ -19,7 +19,7 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
 
     if (token) {
       const jwt = await import('jsonwebtoken');
-      const decoded = jwt.verify(token, process.env.SESSION_SECRET!) as any;
+      const decoded = jwt.default.verify(token, process.env.SESSION_SECRET!) as any;
       
       const user = await storage.getUser(decoded.userId);
       if (user) {

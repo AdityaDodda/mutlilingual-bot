@@ -12,6 +12,7 @@ import Upload from "@/pages/Upload";
 import Library from "@/pages/Library";
 import Settings from "@/pages/Settings";
 import NotFound from "@/pages/not-found";
+import Features from "@/pages/Features";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -27,7 +28,9 @@ function Router() {
         </>
       ) : (
         <>
-          <Route path="/" component={Home} />
+          <Route path="/" component={Features} />
+          <Route path="/features" component={Features} />
+          <Route path="/home" component={Home} />
           <Route path="/upload" component={Upload} />
           <Route path="/library" component={Library} />
           <Route path="/settings" component={Settings} />
