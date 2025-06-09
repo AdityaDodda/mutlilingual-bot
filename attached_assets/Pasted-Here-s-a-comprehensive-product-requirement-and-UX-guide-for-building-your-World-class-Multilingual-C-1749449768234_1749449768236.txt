@@ -1,0 +1,245 @@
+Here’s a comprehensive product requirement and UX guide for building your World-class Multilingual Collateral Converter application in React. This document is written for your frontend team, breaking down features, user stories, flows, and UI expectations step-by-step.
+
+🌐 Product Name (Suggestion): LingoMorph
+🚀 Overview
+An AI-powered web application where users can upload multiple content formats (PDFs, PPTs, Word Docs, Audio, Video), auto-detect the source language, select a target language, and convert the asset into multilingual, downloadable collateral. The app includes an Asset Library for versioning, previews, and easy access.
+
+🧭 Key Modules / Page Flow
+Login / Registration Page
+
+Dashboard
+
+Upload & Convert Section
+
+Conversion Status + Preview
+
+Asset Library
+
+Settings / Profile
+
+Support / Help Center
+
+1️⃣ Login / Registration Page
+UI/UX Features:
+
+Sleek modern UI with animated elements (floating labels, button animations)
+
+Social login options (Google, Microsoft)
+
+Error handling with tooltips
+
+Password strength meter
+
+2️⃣ Dashboard
+Components:
+
+Welcome Banner with User Name
+
+Quick Upload CTA (drag & drop or button)
+
+Recently Converted Files Preview
+
+“Start a New Conversion” button
+
+Access to Asset Library
+
+Wow Factor:
+
+Animated gradient cards
+
+Micro-interactions when hovering/clicking
+
+Light/Dark Mode toggle
+
+3️⃣ Upload & Convert Section
+A. File Upload Zone
+Drag & Drop Zone with animation
+
+Allowed file types: .pdf, .docx, .pptx, .mp3, .mp4, .wav, .avi
+
+Show file thumbnails with delete option before conversion
+
+Multiple uploads allowed
+
+B. Language Detection
+Auto-detect language using backend service
+
+Show detected language as badge (editable with dropdown fallback)
+
+C. Target Language Selection
+Dropdown with 100+ languages (multiselect optional)
+
+Flag icons with language names
+
+D. Advanced Options (Expandable)
+Choose output type:
+
+PDF
+
+Presentation Deck (PPTX)
+
+Text Summary
+
+Audio Translation
+
+Video with Subtitles
+
+Option to keep formatting, replace voiceover, etc.
+
+E. Convert Button
+Button state animation:
+
+Idle → Loading Spinner → Progress bar → Success
+
+Show estimated conversion time
+
+4️⃣ Conversion Status + Preview
+Once conversion is triggered:
+
+Show live status (with animation):
+
+Uploaded → In Queue → Processing → Completed
+
+Success screen with:
+
+Preview buttons (PDF Viewer, Video Player, etc.)
+
+Download CTA
+
+Share via Email/Link
+
+“Save to Asset Library” toggle
+
+Wow Add-On:
+
+3D flip animation when previewing documents
+
+Video with dual subtitles toggle (original + translated)
+
+5️⃣ Asset Library (My Files)
+Features:
+
+Search, filter (by type, language, date)
+
+Grid/List Toggle View
+
+File Thumbnails
+
+Icons showing:
+
+Source language
+
+Target language(s)
+
+Type: Audio/Doc/Video
+
+Action Menu (Download, Share, Delete, Rename)
+
+Wow Factor:
+
+Inline document preview with carousel
+
+Smart tags suggestion (auto-generated)
+
+6️⃣ Settings / Profile
+Update Name, Password, Preferred Language
+
+Language Preference saved for UI
+
+Notification preferences (conversion success, errors)
+
+Billing/Plan (if needed in future)
+
+7️⃣ Support / Help
+Tooltip overlays for first-time users
+
+Chatbot (integrate with something like Chatrly or Intercom)
+
+FAQs, Troubleshooting
+
+Raise a ticket button
+
+🎨 UI/UX Design Guidelines
+Framework: Tailwind CSS or Material UI
+
+Design Style: Google Material 3 / Fluent UI inspired with Glassmorphism elements
+
+Font Style: Inter / Poppins / Roboto
+
+Animation: Framer Motion for transitions, Lottie for icons
+
+Responsiveness: Fully mobile and tablet optimized
+
+Visual DNA:
+
+Soft Shadows
+
+Subtle gradients
+
+Minimalistic icons
+
+Neumorphic buttons for major actions
+
+🧑‍💻 User Stories (Frontend Dev Perspective)
+Upload & Convert
+pgsql
+Copy
+Edit
+As a user, I want to upload multiple files,
+So I can convert them into target language assets.
+Auto-Detect Language
+css
+Copy
+Edit
+As a user, I want the app to auto-detect source language,
+So I don’t have to guess or choose manually.
+Choose Target Language
+css
+Copy
+Edit
+As a user, I want to select one or more output languages,
+So I can download localised versions.
+View and Download Output
+css
+Copy
+Edit
+As a user, I want to preview the converted files before downloading,
+So I can verify the output quality.
+Library Access
+pgsql
+Copy
+Edit
+As a user, I want to access previously converted files from my library,
+So I can download or share them anytime.
+🧱 Suggested Folder Structure
+bash
+Copy
+Edit
+src/
+├── components/
+│   ├── FileUploader.jsx
+│   ├── LanguageSelector.jsx
+│   ├── ConversionStatus.jsx
+│   ├── AssetCard.jsx
+│   └── PreviewModal.jsx
+├── pages/
+│   ├── Dashboard.jsx
+│   ├── Upload.jsx
+│   ├── Library.jsx
+│   └── Settings.jsx
+├── assets/
+├── utils/
+├── services/
+└── App.jsx
+🔧 APIs to Integrate (Frontend Expectations)
+File Upload API
+
+Language Detection API
+
+Conversion Trigger API
+
+Status Polling API
+
+Asset Retrieval API
+
+Download & Share API
