@@ -38,11 +38,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', authenticateToken, async (req: AuthenticatedRequest, res) => {
+  app.get('/api/auth/user', async (req: any, res) => {
     try {
-      const userId = req.user!.id;
-      const user = await storage.getUser(userId);
-      res.json(user);
+      // Check for JWT token first
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (token) {
+        const jwt = await import('jsonwebtoken');
+        try {
+          const decoded = jwt.verify(token, process.env.SESSION_SECRET!) as any;
+          const user = await storage.getUser(decoded.userId);
+          if (user) {
+            return res.json(user);
+          }
+        } catch (jwtError) {
+          // Token invalid, continue to session check
+        }
+      }
+
+      // Fallback to session-based auth
+      if (req.isAuthenticated && req.isAuthenticated()) {
+        const userId = req.user.claims.sub;
+        const user = await storage.getUser(userId);
+        return res.json(user);
+      }
+
+      return res.status(401).json({ message: "Unauthorized" });
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -130,9 +152,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // File upload endpoint
-  app.post('/api/files/upload', authenticateToken, upload.array('files'), async (req: AuthenticatedRequest, res) => {
+  app.post('/api/files/upload', upload.array('files'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      let userId: string | null = null;
+
+      // Check for JWT token first
+      const authHeader = req.headers.authorization;
+      const token = authHeader && authHeader.split(' ')[1];
+
+      if (token) {
+        const jwt = await import('jsonwebtoken');
+        try {
+          const decoded = jwt.verify(token, process.env.SESSION_SECRET!) as any;
+          userId = decoded.userId;
+        } catch (jwtError) {
+          // Token invalid, continue to session check
+        }
+      }
+
+      // Fallback to session-based auth
+      if (!userId && req.isAuthenticated && req.isAuthenticated()) {
+        userId = req.user.claims.sub;
+      }
+
+      if (!userId) {
+        return res.status(401).json({ message: "Unauthorized" });
+      }
+
       const files = req.files as Express.Multer.File[];
       
       if (!files || files.length === 0) {

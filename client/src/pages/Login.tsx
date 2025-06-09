@@ -5,6 +5,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import { 
   Languages, 
   Globe, 
@@ -16,19 +19,81 @@ import {
   Mail,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  Loader2
 } from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLogin, setIsLogin] = useState(true);
+  const { toast } = useToast();
+
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: { email: string; password: string }) => {
+      const response = await apiRequest('POST', '/api/auth/login', credentials);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
+      window.location.href = '/';
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Sign in failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const registerMutation = useMutation({
+    mutationFn: async (userData: { 
+      email: string; 
+      password: string; 
+      firstName?: string; 
+      lastName?: string; 
+    }) => {
+      const response = await apiRequest('POST', '/api/auth/register', userData);
+      return response.json();
+    },
+    onSuccess: (data) => {
+      localStorage.setItem('token', data.token);
+      toast({
+        title: "Account created successfully",
+        description: "Welcome to LingoMorph!",
+      });
+      window.location.href = '/';
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // For now, redirect to Replit auth
-    window.location.href = "/api/login";
+    
+    if (!email || !password) {
+      toast({
+        title: "Missing information",
+        description: "Please fill in all required fields",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (isLogin) {
+      loginMutation.mutate({ email, password });
+    } else {
+      registerMutation.mutate({ email, password, firstName, lastName });
+    }
   };
 
   return (
@@ -160,6 +225,31 @@ export default function Login() {
             
             <CardContent className="space-y-6">
               <form onSubmit={handleSubmit} className="space-y-4">
+{!isLogin && (
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="firstName">First Name</Label>
+                      <Input
+                        id="firstName"
+                        placeholder="John"
+                        value={firstName}
+                        onChange={(e) => setFirstName(e.target.value)}
+                        className="glass border-0 bg-white/50 dark:bg-gray-800/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="lastName">Last Name</Label>
+                      <Input
+                        id="lastName"
+                        placeholder="Doe"
+                        value={lastName}
+                        onChange={(e) => setLastName(e.target.value)}
+                        className="glass border-0 bg-white/50 dark:bg-gray-800/50"
+                      />
+                    </div>
+                  </div>
+                )}
+                
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center">
                     <Mail className="h-4 w-4 mr-2" />
@@ -221,10 +311,20 @@ export default function Login() {
 
                 <Button
                   type="submit"
+                  disabled={loginMutation.isPending || registerMutation.isPending}
                   className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all duration-300"
                 >
-                  {isLogin ? "Sign In" : "Create Account"}
-                  <ArrowRight className="ml-2 h-4 w-4" />
+                  {(loginMutation.isPending || registerMutation.isPending) ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      {isLogin ? "Signing In..." : "Creating Account..."}
+                    </>
+                  ) : (
+                    <>
+                      {isLogin ? "Sign In" : "Create Account"}
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
                 </Button>
               </form>
 
