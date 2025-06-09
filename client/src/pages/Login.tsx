@@ -62,6 +62,12 @@ export default function Login() {
     loginMutation.mutate({ email, password });
   };
 
+  const handleDemoLogin = () => {
+    setEmail("demo@lingomorphh.com");
+    setPassword("demo123");
+    loginMutation.mutate({ email: "demo@lingomorphh.com", password: "demo123" });
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 dark:from-gray-900 dark:via-gray-800 dark:to-blue-900 flex items-center justify-center p-4">
       {/* Background Animation */}
@@ -270,17 +276,18 @@ export default function Login() {
               <div className="relative">
                 <Separator className="my-6" />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-3 text-sm text-gray-600 dark:text-gray-400">
-                  or continue with
+                  or try demo
                 </span>
               </div>
 
               <Button
                 variant="outline"
                 className="w-full glass border-0 py-3 hover:bg-white/20 dark:hover:bg-gray-800/20"
-                onClick={() => window.location.href = "/api/login"}
+                onClick={handleDemoLogin}
+                disabled={loginMutation.isPending}
               >
-                <Shield className="mr-2 h-4 w-4" />
-                Continue with Replit
+                <Users className="mr-2 h-4 w-4" />
+                Demo Login
               </Button>
             </CardContent>
           </Card>

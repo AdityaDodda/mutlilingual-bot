@@ -96,7 +96,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate JWT token
       const jwt = await import('jsonwebtoken');
-      const token = jwt.sign(
+      const token = jwt.default.sign(
         { userId: user.id, email: user.email },
         process.env.SESSION_SECRET!,
         { expiresIn: '7d' }
@@ -135,7 +135,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // Generate JWT token
       const jwt = await import('jsonwebtoken');
-      const token = jwt.sign(
+      const token = jwt.default.sign(
         { userId: user.id, email: user.email },
         process.env.SESSION_SECRET!,
         { expiresIn: '7d' }
