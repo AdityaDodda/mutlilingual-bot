@@ -26,10 +26,7 @@ import {
 export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
   const [showPassword, setShowPassword] = useState(false);
-  const [isLogin, setIsLogin] = useState(true);
   const { toast } = useToast();
 
   const loginMutation = useMutation({
@@ -50,50 +47,19 @@ export default function Login() {
     },
   });
 
-  const registerMutation = useMutation({
-    mutationFn: async (userData: { 
-      email: string; 
-      password: string; 
-      firstName?: string; 
-      lastName?: string; 
-    }) => {
-      const response = await apiRequest('POST', '/api/auth/register', userData);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      localStorage.setItem('token', data.token);
-      toast({
-        title: "Account created successfully",
-        description: "Welcome to LingoMorph!",
-      });
-      window.location.href = '/';
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!email || !password) {
       toast({
         title: "Missing information",
-        description: "Please fill in all required fields",
+        description: "Please enter your email and password",
         variant: "destructive",
       });
       return;
     }
 
-    if (isLogin) {
-      loginMutation.mutate({ email, password });
-    } else {
-      registerMutation.mutate({ email, password, firstName, lastName });
-    }
+    loginMutation.mutate({ email, password });
   };
 
   return (
@@ -216,40 +182,15 @@ export default function Login() {
           <Card className="w-full max-w-md glass border-0 shadow-2xl">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl font-bold">
-                {isLogin ? "Welcome Back" : "Join LingoMorph"}
+                Welcome Back
               </CardTitle>
               <p className="text-gray-600 dark:text-gray-400">
-                {isLogin ? "Sign in to continue your linguistic journey" : "Start transforming content across languages"}
+                Sign in to continue your linguistic journey
               </p>
             </CardHeader>
             
             <CardContent className="space-y-6">
               <form onSubmit={handleSubmit} className="space-y-4">
-{!isLogin && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="firstName">First Name</Label>
-                      <Input
-                        id="firstName"
-                        placeholder="John"
-                        value={firstName}
-                        onChange={(e) => setFirstName(e.target.value)}
-                        className="glass border-0 bg-white/50 dark:bg-gray-800/50"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="lastName">Last Name</Label>
-                      <Input
-                        id="lastName"
-                        placeholder="Doe"
-                        value={lastName}
-                        onChange={(e) => setLastName(e.target.value)}
-                        className="glass border-0 bg-white/50 dark:bg-gray-800/50"
-                      />
-                    </div>
-                  </div>
-                )}
-                
                 <div className="space-y-2">
                   <Label htmlFor="email" className="flex items-center">
                     <Mail className="h-4 w-4 mr-2" />
@@ -297,31 +238,29 @@ export default function Login() {
                   </div>
                 </div>
 
-                {isLogin && (
-                  <div className="flex items-center justify-between text-sm">
-                    <label className="flex items-center space-x-2">
-                      <input type="checkbox" className="rounded" />
-                      <span className="text-gray-600 dark:text-gray-400">Remember me</span>
-                    </label>
-                    <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
-                      Forgot password?
-                    </a>
-                  </div>
-                )}
+                <div className="flex items-center justify-between text-sm">
+                  <label className="flex items-center space-x-2">
+                    <input type="checkbox" className="rounded" />
+                    <span className="text-gray-600 dark:text-gray-400">Remember me</span>
+                  </label>
+                  <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                    Forgot password?
+                  </a>
+                </div>
 
                 <Button
                   type="submit"
-                  disabled={loginMutation.isPending || registerMutation.isPending}
+                  disabled={loginMutation.isPending}
                   className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all duration-300"
                 >
-                  {(loginMutation.isPending || registerMutation.isPending) ? (
+                  {loginMutation.isPending ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      {isLogin ? "Signing In..." : "Creating Account..."}
+                      Signing In...
                     </>
                   ) : (
                     <>
-                      {isLogin ? "Sign In" : "Create Account"}
+                      Sign In
                       <ArrowRight className="ml-2 h-4 w-4" />
                     </>
                   )}
@@ -343,17 +282,6 @@ export default function Login() {
                 <Shield className="mr-2 h-4 w-4" />
                 Continue with Replit
               </Button>
-
-              <div className="text-center text-sm text-gray-600 dark:text-gray-400">
-                {isLogin ? "Don't have an account? " : "Already have an account? "}
-                <button
-                  type="button"
-                  onClick={() => setIsLogin(!isLogin)}
-                  className="text-blue-600 hover:text-blue-700 dark:text-blue-400 font-medium"
-                >
-                  {isLogin ? "Sign up" : "Sign in"}
-                </button>
-              </div>
             </CardContent>
           </Card>
         </motion.div>
