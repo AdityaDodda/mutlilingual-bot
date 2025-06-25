@@ -2,6 +2,7 @@
 from deep_translator import GoogleTranslator
 from pptx import Presentation
 from concurrent.futures import ThreadPoolExecutor, as_completed
+import sys
 
 def split_text_into_chunks(text, max_length=2000):
     """Split text into chunks to handle the translator's character limit."""
@@ -103,9 +104,12 @@ def translate_presentation(input_file, output_file, target_lang):
     print("Translation complete!")
 
 def main():
-    pptx_file_path = r'C:/AI PROJECTS/MultiLingualCollateral/MultiLingualCollateral/Fw_ English to Mandarin Translation/chinese_TW.pptx'
-    output_file_path = r'C:/AI PROJECTS/MultiLingualCollateral/MultiLingualCollateral/Fw_ English to Mandarin Translation/chi-Eng.pptx'
-    target_lang = 'en'
+    if len(sys.argv) != 4:
+        print("Usage: python English to FrenchV2.py <input_file> <output_file> <target_lang>")
+        sys.exit(1)
+    pptx_file_path = sys.argv[1]
+    output_file_path = sys.argv[2]
+    target_lang = sys.argv[3]
     translate_presentation(
         input_file=pptx_file_path,
         output_file=output_file_path,

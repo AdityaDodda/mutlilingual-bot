@@ -7,6 +7,12 @@ import { insertFileSchema, insertUserPreferencesSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import { z } from "zod";
+import { spawn } from "child_process";
+import { fileURLToPath } from 'url';
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 // Configure multer for file uploads
 const upload = multer({
@@ -221,9 +227,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         startedAt: new Date(),
       });
 
-      // Start background conversion process (simplified)
-      simulateConversion(fileId, validatedData.targetLanguages, validatedData.outputFormat);
-
+      // Call the Python script for each target language
+      const inputPath = path.join(__dirname, '..', 'uploads', file.filename);
+      for (const targetLang of validatedData.targetLanguages) {
+        const outputFilename = `converted_${targetLang}_${Date.now()}.pptx`;
+        const outputPath = path.join(__dirname, '..', 'uploads', outputFilename);
+        await runPythonConversion(inputPath, outputPath, targetLang);
+        const stats = fs.statSync(outputPath);
+        await storage.createConvertedFile({
+          originalFileId: fileId,
+          targetLanguage: targetLang,
+          filename: outputFilename,
+          outputFormat: outputFilename.split('.').pop() || 'pptx',
+          size: stats.size,
+          downloadUrl: `/uploads/${outputFilename}`,
+        });
+      }
+      await storage.updateFileStatus(fileId, "completed", 100);
       res.json({ message: "Conversion started", jobId: job.id });
     } catch (error) {
       console.error("Error starting conversion:", error);
@@ -352,30 +372,33 @@ async function detectLanguage(file: Express.Multer.File): Promise<string> {
   return "en"; // Default to English
 }
 
-// Simplified conversion simulation (in a real app, this would be a proper background job)
-async function simulateConversion(fileId: number, targetLanguages: string[], outputFormat?: string) {
-  // Simulate conversion progress
-  const progressSteps = [10, 30, 50, 70, 90, 100];
-  
-  for (let i = 0; i < progressSteps.length; i++) {
-    await new Promise(resolve => setTimeout(resolve, 2000)); // Wait 2 seconds
-    
-    await storage.updateFileStatus(fileId, "processing", progressSteps[i]);
-    
-    if (progressSteps[i] === 100) {
-      // Create converted files for each target language
-      for (const targetLang of targetLanguages) {
-        await storage.createConvertedFile({
-          originalFileId: fileId,
-          targetLanguage: targetLang,
-          filename: `converted_${targetLang}_${Date.now()}.pdf`,
-          outputFormat: outputFormat || "pdf",
-          size: Math.floor(Math.random() * 1000000), // Random size
-          downloadUrl: `/downloads/converted_${targetLang}_${Date.now()}.pdf`,
-        });
+const pythonExecutable = path.join(__dirname, '..', 'multi', 'scripts', 'python.exe');
+
+async function runPythonConversion(inputPath, outputPath, targetLang) {
+  return new Promise((resolve, reject) => {
+    const pythonProcess = spawn(pythonExecutable, [
+      'English to FrenchV2.py',
+      inputPath,
+      outputPath,
+      targetLang
+    ], {
+      env: { ...process.env, PYTHONIOENCODING: 'utf-8' }
+    });
+
+    pythonProcess.stdout.on('data', (data) => {
+      console.log(`Python stdout: ${data}`);
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      console.error(`Python stderr: ${data}`);
+    });
+
+    pythonProcess.on('close', (code) => {
+      if (code === 0) {
+        resolve();
+      } else {
+        reject(new Error(`Python script exited with code ${code}`));
       }
-      
-      await storage.updateFileStatus(fileId, "completed", 100);
-    }
-  }
+    });
+  });
 }
