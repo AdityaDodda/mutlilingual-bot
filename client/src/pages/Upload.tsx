@@ -25,6 +25,7 @@ import {
   Clock
 } from "lucide-react";
 import type { File } from "@/lib/types";
+import { SUPPORTED_LANGUAGES } from "@/lib/types";
 
 export default function Upload() {
   const { user } = useAuth();
@@ -37,6 +38,7 @@ export default function Upload() {
   const [isAdvancedOpen, setIsAdvancedOpen] = useState(false);
   const [isConverting, setIsConverting] = useState(false);
   const [conversionJobId, setConversionJobId] = useState<number | null>(null);
+  const [sourceLanguage, setSourceLanguage] = useState<string>("auto");
 
   const uploadMutation = useMutation({
     mutationFn: async (files: FileList) => {
@@ -73,6 +75,7 @@ export default function Upload() {
       const results = [];
       for (const file of uploadedFiles) {
         const response = await apiRequest('POST', `/api/files/${file.id}/convert`, {
+          sourceLanguage,
           targetLanguages,
           outputFormat,
           preserveFormatting,
@@ -182,6 +185,28 @@ export default function Upload() {
                 onUpload={handleFileUpload}
                 isUploading={uploadMutation.isPending}
               />
+              {/* Source Language Selector */}
+              <div className="mt-6">
+                <label className="block font-semibold mb-2">Source Language</label>
+                <LanguageSelector
+                  selectedLanguages={[sourceLanguage]}
+                  onSelectionChange={([lang]) => setSourceLanguage(lang)}
+                  singleSelect
+                  includeAutoDetect
+                  placeholder="Select source language..."
+                />
+                <p className="text-xs text-gray-500 mt-1">Let the system detect the source language automatically, or pick one to override.</p>
+              </div>
+              {/* Target Language Selector */}
+              <div className="mt-6">
+                <label className="block font-semibold mb-2">Target Languages</label>
+                <LanguageSelector
+                  selectedLanguages={targetLanguages}
+                  onSelectionChange={setTargetLanguages}
+                  maxSelections={10}
+                  placeholder="Select target languages..."
+                />
+              </div>
               
               {uploadedFiles.length > 0 && (
                 <div className="mt-6">
@@ -224,81 +249,6 @@ export default function Upload() {
                           Remove
                         </Button>
                       </motion.div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-        </motion.div>
-
-        {/* Language Selection */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, delay: 0.2 }}
-        >
-          <Card className="glass border-0">
-            <CardHeader>
-              <CardTitle className="flex items-center">
-                <Languages className="mr-2 h-5 w-5" />
-                Language Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Source Language */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    <Eye className="inline mr-2 h-4 w-4" />
-                    Source Language
-                  </label>
-                  <div className="glass rounded-xl p-4">
-                    <div className="flex items-center space-x-3">
-                      <img 
-                        src="https://flagcdn.com/w40/us.png" 
-                        alt="English" 
-                        className="w-6 h-4 object-cover rounded"
-                      />
-                      <span className="font-medium">English</span>
-                      {/* <Badge variant="secondary" className="text-xs">
-                        Auto-detected
-                      </Badge> */}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Target Languages */}
-                <div>
-                  <label className="block text-sm font-medium mb-3">
-                    <Languages className="inline mr-2 h-4 w-4" />
-                    Target Language(s)
-                  </label>
-                  <LanguageSelector
-                    selectedLanguages={targetLanguages}
-                    onSelectionChange={setTargetLanguages}
-                  />
-                </div>
-              </div>
-
-              {targetLanguages.length > 0 && (
-                <div className="mt-4">
-                  <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                    Selected languages:
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {targetLanguages.map(lang => (
-                      <Badge key={lang} variant="outline">
-                        {lang.toUpperCase()}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="ml-1 h-4 w-4 p-0 hover:bg-transparent"
-                          onClick={() => setTargetLanguages(prev => prev.filter(l => l !== lang))}
-                        >
-                          ×
-                        </Button>
-                      </Badge>
                     ))}
                   </div>
                 </div>
