@@ -70,7 +70,7 @@ export default function Settings() {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/login";
         }, 500);
         return;
       }
@@ -379,7 +379,7 @@ export default function Settings() {
                 <Button 
                   variant="outline" 
                   className="glass border-0 text-red-600 hover:text-red-700"
-                  onClick={() => window.location.href = "/api/logout"}
+                  onClick={() => { localStorage.removeItem('token'); window.location.href = "/login"; }}
                 >
                   Sign Out
                 </Button>

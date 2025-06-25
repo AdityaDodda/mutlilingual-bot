@@ -114,7 +114,7 @@ export default function Layout({ children }: LayoutProps) {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => window.location.href = "/api/logout"}
+              onClick={() => { localStorage.removeItem('token'); window.location.href = "/login"; }}
               className="hidden md:flex items-center space-x-2 p-2 rounded-lg glass hover:bg-white/20 transition-all text-gray-600 dark:text-gray-300"
             >
               <LogOut className="h-4 w-4" />
@@ -185,7 +185,7 @@ export default function Layout({ children }: LayoutProps) {
                   </div>
                   
                   <button
-                    onClick={() => window.location.href = "/api/logout"}
+                    onClick={() => { localStorage.removeItem('token'); window.location.href = "/login"; }}
                     className="flex items-center space-x-3 px-4 py-3 w-full text-left rounded-lg transition-all text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
                   >
                     <LogOut className="h-5 w-5" />

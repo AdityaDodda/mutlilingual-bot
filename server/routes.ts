@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+// import { setupAuth, isAuthenticated } from "./replitAuth";
 import { authenticateToken, type AuthenticatedRequest } from "./auth";
 import { insertFileSchema, insertUserPreferencesSchema } from "@shared/schema";
 import multer from "multer";
@@ -35,40 +35,12 @@ const upload = multer({
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  // await setupAuth(app);
 
   // Auth routes
-  app.get('/api/auth/user', async (req: any, res) => {
+  app.get('/api/auth/user', authenticateToken, async (req: any, res) => {
     try {
-      // Check for JWT token first
-      const authHeader = req.headers.authorization;
-      const token = authHeader && authHeader.split(' ')[1];
-
-      if (token) {
-        const jwt = await import('jsonwebtoken');
-        try {
-          console.log('Verifying token:', token.substring(0, 20) + '...');
-          const decoded = jwt.default.verify(token, process.env.SESSION_SECRET!) as any;
-          console.log('Token decoded successfully:', decoded);
-          const user = await storage.getUser(decoded.userId);
-          console.log('User found:', user ? 'Yes' : 'No');
-          if (user) {
-            return res.json(user);
-          }
-        } catch (jwtError) {
-          console.log('JWT verification error:', jwtError);
-          // Token invalid, continue to session check
-        }
-      }
-
-      // Fallback to session-based auth
-      if (req.isAuthenticated && req.isAuthenticated()) {
-        const userId = req.user.claims.sub;
-        const user = await storage.getUser(userId);
-        return res.json(user);
-      }
-
-      return res.status(401).json({ message: "Unauthorized" });
+      return res.json(req.user);
     } catch (error) {
       console.error("Error fetching user:", error);
       res.status(500).json({ message: "Failed to fetch user" });
@@ -217,7 +189,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Start conversion endpoint
-  app.post('/api/files/:id/convert', isAuthenticated, async (req: any, res) => {
+  app.post('/api/files/:id/convert', authenticateToken, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
@@ -260,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get conversion status
-  app.get('/api/files/:id/status', isAuthenticated, async (req: any, res) => {
+  app.get('/api/files/:id/status', authenticateToken, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
@@ -287,7 +259,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get user's files
-  app.get('/api/files', isAuthenticated, async (req: any, res) => {
+  app.get('/api/files', authenticateToken, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const files = await storage.getFilesByUser(userId);
@@ -299,7 +271,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Get converted files for a user
-  app.get('/api/files/converted', isAuthenticated, async (req: any, res) => {
+  app.get('/api/files/converted', authenticateToken, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const convertedFiles = await storage.getConvertedFilesByUser(userId);
@@ -311,7 +283,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Delete file
-  app.delete('/api/files/:id', isAuthenticated, async (req: any, res) => {
+  app.delete('/api/files/:id', authenticateToken, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
       const userId = req.user.claims.sub;
@@ -330,7 +302,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // User preferences endpoints
-  app.get('/api/preferences', isAuthenticated, async (req: any, res) => {
+  app.get('/api/preferences', authenticateToken, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const preferences = await storage.getUserPreferences(userId);
@@ -341,7 +313,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/preferences', isAuthenticated, async (req: any, res) => {
+  app.put('/api/preferences', authenticateToken, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
       const preferencesData = { ...req.body, userId };
@@ -355,6 +327,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to update preferences" });
     }
   });
+
+// GET /logout — for browser redirect-based logout (optional)
+app.get('/logout', (_req, res) => {
+  res.redirect('/login');
+});
+
+// GET /api/logout — for frontend to call via fetch/apiRequest
+app.get('/api/logout', (_req, res) => {
+  res.status(200).json({ message: 'Logged out successfully' });
+});
+
 
   const httpServer = createServer(app);
   return httpServer;
