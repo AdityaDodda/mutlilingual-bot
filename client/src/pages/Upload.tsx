@@ -261,9 +261,9 @@ export default function Upload() {
                         className="w-6 h-4 object-cover rounded"
                       />
                       <span className="font-medium">English</span>
-                      <Badge variant="secondary" className="text-xs">
+                      {/* <Badge variant="secondary" className="text-xs">
                         Auto-detected
-                      </Badge>
+                      </Badge> */}
                     </div>
                   </div>
                 </div>
