@@ -38,7 +38,7 @@ export default function Landing() {
           </div>
           
           <Button 
-            onClick={() => window.location.href = '/api/login'}
+            onClick={() => window.location.href = '/login'}
             className="gradient-primary text-white hover:opacity-90 transition-opacity"
           >
             Get Started
@@ -73,7 +73,7 @@ export default function Landing() {
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <Button 
                 size="lg"
-                onClick={() => window.location.href = '/api/login'}
+                onClick={() => window.location.href = '/login'}
                 className="gradient-primary text-white px-8 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 neumorphic"
               >
                 <Upload className="mr-2 h-5 w-5" />
@@ -254,7 +254,7 @@ export default function Landing() {
             </p>
             <Button 
               size="lg"
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => window.location.href = '/login'}
               className="gradient-primary text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 neumorphic animate-glow"
             >
               Start Your Free Trial

@@ -8,20 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { 
-  Languages, 
-  Globe, 
-  FileText, 
-  Zap, 
-  Shield, 
-  Users,
-  ArrowRight,
-  Mail,
-  Lock,
-  Eye,
-  EyeOff,
-  Loader2
-} from "lucide-react";
+import { Languages, Globe, FileText, Zap, Shield, Users,ArrowRight,Mail,Lock,Eye,EyeOff,Loader2} from "lucide-react";
 
 export default function Login() {
   const [email, setEmail] = useState("");
@@ -63,9 +50,9 @@ export default function Login() {
   };
 
   const handleDemoLogin = () => {
-    setEmail("demo@lingomorphh.com");
-    setPassword("demo123");
-    loginMutation.mutate({ email: "demo@lingomorphh.com", password: "demo123" });
+    setEmail("demo@lingomorph.com");
+    setPassword("demoqwerty");
+    loginMutation.mutate({ email: "demo@lingomorph.com", password: "demoqwerty" });
   };
 
   return (

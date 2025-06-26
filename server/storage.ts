@@ -23,7 +23,7 @@ export interface IStorage {
   // User operations (mandatory for Replit Auth)
   getUser(id: string): Promise<User | undefined>;
   upsertUser(user: UpsertUser): Promise<User>;
-  
+
   // Email/password authentication
   getUserByEmail(email: string): Promise<User | undefined>;
   createUserWithPassword(userData: {
@@ -32,24 +32,25 @@ export interface IStorage {
     firstName?: string;
     lastName?: string;
   }): Promise<User>;
-  
+
   // File operations
   createFile(file: InsertFile): Promise<File>;
   getFile(id: number): Promise<File | undefined>;
   getFilesByUser(userId: string): Promise<File[]>;
   updateFileStatus(id: number, status: string, progress?: number): Promise<File>;
   deleteFile(id: number): Promise<void>;
-  
+
   // Converted file operations
   createConvertedFile(convertedFile: InsertConvertedFile): Promise<ConvertedFile>;
   getConvertedFilesByOriginal(originalFileId: number): Promise<ConvertedFile[]>;
-  getConvertedFilesByUser(userId: string): Promise<ConvertedFile[]>;
-  
+  getConvertedFilesByUser(userId:string): Promise<ConvertedFile[]>;
+  getConvertedFile(id: number): Promise<ConvertedFile | null>; // Signature is correct here
+
   // Conversion job operations
   createConversionJob(job: InsertConversionJob): Promise<ConversionJob>;
   updateConversionJob(id: number, updates: Partial<ConversionJob>): Promise<ConversionJob>;
   getConversionJobsByFile(fileId: number): Promise<ConversionJob[]>;
-  
+
   // User preferences operations
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
@@ -163,6 +164,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getConvertedFilesByUser(userId: string): Promise<ConvertedFile[]> {
+    // This query is good, it finds converted files owned by the user
     return await db
       .select({
         id: convertedFiles.id,
@@ -178,6 +180,19 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(files, eq(convertedFiles.originalFileId, files.id))
       .where(eq(files.userId, userId))
       .orderBy(desc(convertedFiles.createdAt));
+  }
+
+  // *** CORRECTED AND ADDED METHOD ***
+  // This is the implementation for `getConvertedFile` that was missing.
+  async getConvertedFile(id: number): Promise<ConvertedFile | null> {
+    // Using the same query style as your other methods for consistency.
+    const [file] = await db
+      .select()
+      .from(convertedFiles)
+      .where(eq(convertedFiles.id, id));
+    
+    // The query returns an array. If `file` is undefined (not found), this returns null.
+    return file || null;
   }
 
   // Conversion job operations

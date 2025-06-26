@@ -302,6 +302,76 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+// Download an ORIGINAL file
+app.get('/api/files/:id/download', authenticateToken, async (req: any, res) => {
+  try {
+    const fileId = parseInt(req.params.id);
+    const userId = req.user.claims.sub;
+
+    const file = await storage.getFile(fileId); // Assuming storage.getFile finds an original file
+
+    if (!file || file.userId !== userId) {
+      return res.status(404).json({ message: "File not found or you don't have permission." });
+    }
+
+    const filePath = path.join(__dirname, '..', 'uploads', file.filename);
+    const downloadName = file.originalName || file.filename;
+
+    // res.download() handles setting the correct headers and streaming the file
+    res.download(filePath, downloadName, (err) => {
+      if (err) {
+        console.error("Error downloading file:", err);
+        // Avoid sending another response if headers were already sent
+        if (!res.headersSent) {
+          res.status(500).send("Could not download the file.");
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error while downloading file." });
+  }
+});
+
+// Download a CONVERTED file
+app.get('/api/files/converted/:id/download', authenticateToken, async (req: any, res) => {
+  try {
+    const convertedFileId = parseInt(req.params.id);
+    const userId = req.user.claims.sub;
+
+    // You need a way to get a converted file and check its ownership
+    // This might involve joining with the original file's table
+    const convertedFile = await storage.getConvertedFile(convertedFileId); // You may need to implement this
+    // A robust check to ensure the user requesting the converted file is the owner
+    // of the original file. This is a placeholder for your actual logic.
+    const originalFile = await storage.getFile(convertedFile.originalFileId);
+    if (!originalFile || originalFile.userId !== userId) {
+       return res.status(404).json({ message: "File not found or you don't have permission." });
+    }
+    
+    if (!convertedFile) {
+      return res.status(404).json({ message: "Converted file not found." });
+    }
+
+    const filePath = path.join(__dirname, '..', 'uploads', convertedFile.filename);
+    const downloadName = convertedFile.filename; 
+
+    res.download(filePath, downloadName, (err) => {
+      if (err) {
+        console.error("Error downloading converted file:", err);
+        if (!res.headersSent) {
+          res.status(500).send("Could not download the file.");
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error while downloading file." });
+  }
+});
+
   // Delete file
   app.delete('/api/files/:id', authenticateToken, async (req: any, res) => {
     try {

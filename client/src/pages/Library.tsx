@@ -12,16 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { motion } from "framer-motion";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { 
-  Search, 
-  Grid3X3, 
-  List,
-  FileText,
-  Filter,
-  SortAsc,
-  RefreshCw,
-  Folder
-} from "lucide-react";
+import { Search, Grid3X3, List,FileText,Filter,SortAsc,RefreshCw,Folder,Download,Loader2} from "lucide-react";
 import { isUnauthorizedError } from "@/lib/authUtils";
 import type { File, ConvertedFile } from "@/lib/types";
 
@@ -33,12 +24,13 @@ export default function Library() {
   const { user } = useAuth();
   const { toast } = useToast();
   
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [viewMode, setViewMode] = useState<ViewMode>("list");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortBy>("recent");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [selectedFile, setSelectedFile] = useState<File | ConvertedFile | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<number | null>(null);
 
   const { data: filesData, isLoading: isLoadingFiles, error: filesError } = useQuery({
     queryKey: ["/api/files"],
@@ -137,12 +129,61 @@ export default function Library() {
     deleteMutation.mutate(fileId);
   };
 
-  const handleDownload = (file: File | ConvertedFile) => {
-    // In a real implementation, this would download the file
+ // Inside your Library component function
+
+  // --- REPLACE the existing handleDownload with this ---
+  const handleDownload = async (file: any) => {
+    // A type guard to ensure we have a valid file object with an id and name
+    if (!file || typeof file.id !== 'number' || !file.filename) {
+      toast({
+        title: "Invalid File",
+        description: "Cannot download this item.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setDownloadingId(file.id); // Set loading state for this specific file
+    
     toast({
-      title: "Download started",
-      description: `Downloading ${file.originalName || file.filename}`,
+      title: "Preparing download...",
+      description: `Your download for ${file.originalName || file.filename} will begin shortly.`,
     });
+
+    try {
+      // Determine the correct endpoint based on file type
+      const endpoint = file.type === 'original' 
+        ? `/api/files/${file.id}/download` 
+        : `/api/files/converted/${file.id}/download`;
+
+      const response = await apiRequest('GET', endpoint, null, { responseType: 'blob' });
+      
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      
+      // Use originalName for the download if it exists, otherwise use filename
+      const downloadName = file.originalName || file.filename;
+      link.setAttribute('download', downloadName);
+      
+      document.body.appendChild(link);
+      link.click();
+      
+      // Clean up the created object URL and the link element
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+    } catch (error: any) {
+      console.error("Download failed:", error);
+      toast({
+        title: "Download Failed",
+        description: error.message || "Could not download the file. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingId(null); // Clear loading state regardless of success or failure
+    }
   };
 
   if (isLoading) {
@@ -196,21 +237,19 @@ export default function Library() {
             
             {/* View Toggle */}
             <div className="flex items-center space-x-1 glass rounded-xl p-1">
+               <Button
+                variant={viewMode === "list" ? "default" : "ghost"}
+                size="sm"
+                onClick={() => setViewMode("list")}
+                className={viewMode === "list" ? "bg-primary text-white" : ""}>
+                <List className="h-4 w-4" />
+              </Button>
               <Button
                 variant={viewMode === "grid" ? "default" : "ghost"}
                 size="sm"
                 onClick={() => setViewMode("grid")}
-                className={viewMode === "grid" ? "bg-primary text-white" : ""}
-              >
+                className={viewMode === "grid" ? "bg-primary text-white" : ""}>
                 <Grid3X3 className="h-4 w-4" />
-              </Button>
-              <Button
-                variant={viewMode === "list" ? "default" : "ghost"}
-                size="sm"
-                onClick={() => setViewMode("list")}
-                className={viewMode === "list" ? "bg-primary text-white" : ""}
-              >
-                <List className="h-4 w-4" />
               </Button>
             </div>
           </div>
@@ -349,9 +388,11 @@ export default function Library() {
                       <Button variant="ghost" size="sm" onClick={() => handlePreview(file)}>
                         Preview
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDownload(file)}>
-                        Download
-                      </Button>
+                      <Button variant="ghost" size="sm" onClick={() => handleDownload(file)} disabled={downloadingId === file.id}>
+                         {downloadingId === file.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                            <Download className="mr-2 h-4 w-4" />)}Download</Button>
                       <Button 
                         variant="ghost" 
                         size="sm" 

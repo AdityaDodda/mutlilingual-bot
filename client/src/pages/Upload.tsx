@@ -186,7 +186,7 @@ export default function Upload() {
                 isUploading={uploadMutation.isPending}
               />
               {/* Source Language Selector */}
-              <div className="mt-6">
+              {/* <div className="mt-6">
                 <label className="block font-semibold mb-2">Source Language</label>
                 <LanguageSelector
                   selectedLanguages={[sourceLanguage]}
@@ -196,6 +196,30 @@ export default function Upload() {
                   placeholder="Select source language..."
                 />
                 <p className="text-xs text-gray-500 mt-1">Let the system detect the source language automatically, or pick one to override.</p>
+              </div> */}
+              <div className="mt-6">
+                <label className="block font-semibold mb-2">Source Language</label>
+                <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
+                  <SelectTrigger className="w-full glass border-0">
+                    <SelectValue placeholder="Select source language..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="auto">
+                      <div className="flex items-center">
+                        <Wand2 className="mr-2 h-4 w-4 opacity-70" />
+                        <span>Auto-Detect (Recommended)</span>
+                      </div>
+                    </SelectItem>
+                    {SUPPORTED_LANGUAGES.map((language) => (
+                      <SelectItem key={language.code} value={language.code}>
+                        <div className="flex items-center">
+                          <span className="mr-3 text-lg">{language.flag}</span>
+                          <span>{language.name}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
               {/* Target Language Selector */}
               <div className="mt-6">

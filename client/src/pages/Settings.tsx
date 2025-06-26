@@ -379,7 +379,7 @@ export default function Settings() {
                 <Button 
                   variant="outline" 
                   className="glass border-0 text-red-600 hover:text-red-700"
-                  onClick={() => { localStorage.removeItem('token'); window.location.href = "/login"; }}
+                  onClick={() => { localStorage.removeItem('token'); window.location.href = "/"; }}
                 >
                   Sign Out
                 </Button>
