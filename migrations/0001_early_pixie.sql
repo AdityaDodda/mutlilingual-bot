@@ -1,0 +1,1 @@
+ALTER TABLE "converted_files" ADD COLUMN "translation_download_url" varchar;

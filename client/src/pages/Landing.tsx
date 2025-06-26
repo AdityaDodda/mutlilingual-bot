@@ -34,13 +34,12 @@ export default function Landing() {
           <div className="hidden md:flex items-center space-x-8">
             <a href="#features" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">Features</a>
             <a href="#how-it-works" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">How It Works</a>
-            <a href="#pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">Pricing</a>
+            {/* <a href="#pricing" className="text-gray-600 dark:text-gray-300 hover:text-primary transition-colors">Pricing</a> */}
           </div>
           
           <Button 
             onClick={() => window.location.href = '/login'}
-            className="gradient-primary text-white hover:opacity-90 transition-opacity"
-          >
+            className="gradient-primary text-white hover:opacity-90 transition-opacity">
             Get Started
           </Button>
         </div>
@@ -252,13 +251,13 @@ export default function Landing() {
             <p className="text-xl text-gray-600 dark:text-gray-300 mb-8">
               Join thousands of users who trust LingoMorph for their content translation needs.
             </p>
-            <Button 
+            {/* <Button 
               size="lg"
               onClick={() => window.location.href = '/login'}
               className="gradient-primary text-white px-12 py-4 rounded-2xl font-semibold text-lg hover:shadow-xl hover:scale-105 transition-all duration-300 neumorphic animate-glow"
             >
               Start Your Free Trial
-            </Button>
+            </Button> */}
             <div className="flex items-center justify-center mt-6 space-x-1">
               {[...Array(5)].map((_, i) => (
                 <Star key={i} className="h-5 w-5 text-yellow-400 fill-current" />

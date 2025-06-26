@@ -447,7 +447,7 @@ const pythonExecutable = path.join(__dirname, '..', 'multi', 'scripts', 'python.
 async function runPythonConversion(inputPath, outputPath, targetLang) {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn(pythonExecutable, [
-      'English to FrenchV2.py',
+      'PPT Translation.py',
       inputPath,
       outputPath,
       targetLang
