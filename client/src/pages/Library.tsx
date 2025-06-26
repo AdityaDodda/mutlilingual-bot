@@ -129,11 +129,8 @@ export default function Library() {
     deleteMutation.mutate(fileId);
   };
 
- // Inside your Library component function
-
-  // --- REPLACE the existing handleDownload with this ---
+  // Handle Download Function
   const handleDownload = async (file: any) => {
-    // A type guard to ensure we have a valid file object with an id and name
     if (!file || typeof file.id !== 'number' || !file.filename) {
       toast({
         title: "Invalid File",
@@ -143,15 +140,13 @@ export default function Library() {
       return;
     }
 
-    setDownloadingId(file.id); // Set loading state for this specific file
-    
+    setDownloadingId(file.id);
     toast({
       title: "Preparing download...",
       description: `Your download for ${file.originalName || file.filename} will begin shortly.`,
     });
 
     try {
-      // Determine the correct endpoint based on file type
       const endpoint = file.type === 'original' 
         ? `/api/files/${file.id}/download` 
         : `/api/files/converted/${file.id}/download`;
@@ -182,7 +177,7 @@ export default function Library() {
         variant: "destructive",
       });
     } finally {
-      setDownloadingId(null); // Clear loading state regardless of success or failure
+      setDownloadingId(null);
     }
   };
 

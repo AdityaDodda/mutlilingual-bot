@@ -4,14 +4,11 @@ from pptx import Presentation
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import sys
 
-# --- Helper functions (no changes needed here) ---
-
 def split_text_into_chunks(text, max_length=2000):
     """Split text into chunks to handle the translator's character limit."""
     return [text[i:i+max_length] for i in range(0, len(text), max_length)]
 
 def translate_chunk(chunk, source_lang, target_lang):
-    # Use 'auto' for source language to let the library detect it
     return GoogleTranslator(source=source_lang, target=target_lang).translate(chunk)
 
 def translate_text_safely(text, source_lang, target_lang):

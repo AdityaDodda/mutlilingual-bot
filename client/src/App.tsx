@@ -28,6 +28,7 @@ function Router() {
         </>
       ) : (
         <>
+          <Route path="/login" component={() => <Redirect to="/features" />} />
           <Route path="/" component={() => <Redirect to="/features" />} />
           <Route path="/features" component={Features} />
           <Route path="/home" component={Home} />
