@@ -57,13 +57,29 @@ def translate_text_safely(text, source_lang, target_lang):
     original_text = text
     extracted_texts.append(original_text)
     protected_text = protect_company_name(text)
- 
-    if protected_text.strip() == PLACEHOLDER_TOKEN:
+   
+    if PLACEHOLDER_TOKEN in protected_text and protected_text.strip() == PLACEHOLDER_TOKEN:
         final_text = CORRECT_COMPANY_NAME
         translated_texts.append(final_text)
         translation_log.append("Company name only - no translation")
         print(f"{original_text} -> {final_text}")
         return final_text
+    # Company name only (no context), restore without translating
+    elif PLACEHOLDER_TOKEN in protected_text:
+        translated = translate_chunk(protected_text, source_lang, target_lang)
+        final_text = restore_company_name(translated)
+        translated_texts.append(final_text)
+        translation_log.append("Translated (with placeholder restored)")
+        print(f"{original_text} -> {final_text}")
+        return final_text
+ 
+ 
+    # if protected_text.strip() == PLACEHOLDER_TOKEN:
+    #     final_text = CORRECT_COMPANY_NAME
+    #     translated_texts.append(final_text)
+    #     translation_log.append("Company name only - no translation")
+    #     print(f"{original_text} -> {final_text}")
+    #     return final_text
  
     chunks = split_text_into_chunks(protected_text)
     translated_chunks = []
@@ -97,17 +113,34 @@ def process_text_frame(text_frame, source_lang, target_lang):
                 translated_text = translate_text_safely(original_text, source_lang, target_lang)
                 run.text = translated_text
  
+# def process_shape_text(shape, source_lang, target_lang):
+#     if hasattr(shape, 'text_frame') and shape.text.strip():
+#         process_text_frame(shape.text_frame, source_lang, target_lang)
+#     if hasattr(shape, 'has_table') and shape.has_table:
+#         for row in shape.table.rows:
+#             for cell in row.cells:
+#                 if hasattr(cell, 'text_frame') and cell.text.strip():
+#                     process_text_frame(cell.text_frame, source_lang, target_lang)
+#     if hasattr(shape, 'shapes'):
+#         for nested_shape in shape.shapes:
+#             process_shape_text(nested_shape, source_lang, target_lang)
 def process_shape_text(shape, source_lang, target_lang):
-    if hasattr(shape, 'text_frame') and shape.text.strip():
+    # Process any shape with a text_frame, even if text is empty
+    if hasattr(shape, 'text_frame') and shape.text_frame is not None:
         process_text_frame(shape.text_frame, source_lang, target_lang)
+ 
+    # Process text in table cells if it's a table
     if hasattr(shape, 'has_table') and shape.has_table:
         for row in shape.table.rows:
             for cell in row.cells:
-                if hasattr(cell, 'text_frame') and cell.text.strip():
+                if hasattr(cell, 'text_frame') and cell.text_frame is not None:
                     process_text_frame(cell.text_frame, source_lang, target_lang)
-    if hasattr(shape, 'shapes'):
+ 
+    # Recursively process nested shapes (e.g., grouped shapes, SmartArt)
+    if hasattr(shape, 'shapes') and shape.shapes:
         for nested_shape in shape.shapes:
             process_shape_text(nested_shape, source_lang, target_lang)
+ 
  
 def scale_slide_fonts(slide, scale=0.8, default_size_pt=18):
     for shape in slide.shapes:
@@ -136,16 +169,16 @@ def translate_presentation(input_file, output_file, target_lang):
     for i, slide in enumerate(prs.slides):
         should_scale = False
         for shape in slide.shapes:
-            if hasattr(shape, 'text') and shape.text.strip():
-                process_shape_text(shape, source_lang, target_lang)
-                try:
-                    text_length = len(shape.text)
-                    shape_width_in_inches = shape.width.inches if hasattr(shape, 'width') else 10.0
-                    if text_length > 200 and shape_width_in_inches < 5.0:
-                        print(f"Slide {i+1}: Long text ({text_length} chars) in narrow width ({shape_width_in_inches:.2f} inches)")
-                        should_scale = True
-                except Exception as e:
-                    print(f"Error evaluating scaling condition: {e}")
+            # if hasattr(shape, 'text') and shape.text.strip():
+            process_shape_text(shape, source_lang, target_lang)
+            try:
+                text_length = len(shape.text)
+                shape_width_in_inches = shape.width.inches if hasattr(shape, 'width') else 10.0
+                if text_length > 200 and shape_width_in_inches < 5.0:
+                    print(f"Slide {i+1}: Long text ({text_length} chars) in narrow width ({shape_width_in_inches:.2f} inches)")
+                    should_scale = True
+            except Exception as e:
+                print(f"Error evaluating scaling condition: {e}")
  
             if shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 if (i + 1) not in image_slides:

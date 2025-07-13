@@ -11,7 +11,7 @@ import Home from "@/pages/Home";
 import Upload from "@/pages/Upload";
 import Library from "@/pages/Library";
 import Settings from "@/pages/Settings";
-import NotFound from "@/pages/not-found";
+// import NotFound from "@/pages/not-found";
 import Features from "@/pages/Features";
 
 function Router() {
@@ -37,7 +37,7 @@ function Router() {
           <Route path="/settings" component={Settings} />
         </>
       )}
-      <Route component={NotFound} />
+      {/* <Route component={NotFound} /> */}
     </Switch>
   );
 }

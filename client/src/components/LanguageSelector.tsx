@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -30,6 +30,17 @@ export default function LanguageSelector({
 }: LanguageSelectorProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  // Debug logging
+  useEffect(() => {
+    console.log('LanguageSelector re-render:', {
+      selectedLanguages,
+      isOpen,
+      searchQuery,
+      isAnimating
+    });
+  }, [selectedLanguages, isOpen, searchQuery, isAnimating]);
 
   const languageList = useMemo(() => {
     let langs = [...SUPPORTED_LANGUAGES];
@@ -42,58 +53,102 @@ export default function LanguageSelector({
   const filteredLanguages = useMemo(() => {
     if (!searchQuery) return languageList;
     return languageList.filter(lang =>
-      lang.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lang.code.toLowerCase().includes(searchQuery.toLowerCase())
+      lang?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lang?.code?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [searchQuery, languageList]);
 
   const selectedLanguageObjects = useMemo(() => {
-    return selectedLanguages.map(code =>
-      languageList.find(lang => lang.code === code)
-    ).filter(Boolean) as Language[];
+    const result = selectedLanguages
+      .map(code => languageList.find(lang => lang.code === code))
+      .filter((lang): lang is Language => Boolean(lang && lang.code && lang.name));
+    
+    console.log('Selected language objects:', result);
+    return result;
   }, [selectedLanguages, languageList]);
 
   const handleLanguageToggle = (languageCode: string) => {
-    if (singleSelect) {
-      onSelectionChange([languageCode]);
-    } else {
-      if (selectedLanguages.includes(languageCode)) {
-        onSelectionChange(selectedLanguages.filter(code => code !== languageCode));
+    console.log('Toggle language:', languageCode);
+    
+    if (isAnimating) {
+      console.log('Animation in progress, ignoring toggle');
+      return;
+    }
+
+    setIsAnimating(true);
+    
+    try {
+      if (singleSelect) {
+        onSelectionChange([languageCode]);
+        setIsOpen(false);
       } else {
-        if (selectedLanguages.length < maxSelections) {
-          onSelectionChange([...selectedLanguages, languageCode]);
+        if (selectedLanguages.includes(languageCode)) {
+          onSelectionChange(selectedLanguages.filter(code => code !== languageCode));
+        } else {
+          if (selectedLanguages.length < maxSelections) {
+            onSelectionChange([...selectedLanguages, languageCode]);
+          }
         }
       }
+    } catch (error) {
+      console.error('Error in handleLanguageToggle:', error);
+    } finally {
+      // Reset animation flag after a short delay
+      setTimeout(() => setIsAnimating(false), 100);
     }
   };
 
   const removeLanguage = (languageCode: string) => {
-    onSelectionChange(selectedLanguages.filter(code => code !== languageCode));
+    console.log('Remove language:', languageCode);
+    
+    if (isAnimating) {
+      console.log('Animation in progress, ignoring removal');
+      return;
+    }
+
+    setIsAnimating(true);
+    
+    try {
+      onSelectionChange(selectedLanguages.filter(code => code !== languageCode));
+    } catch (error) {
+      console.error('Error in removeLanguage:', error);
+    } finally {
+      setTimeout(() => setIsAnimating(false), 100);
+    }
   };
 
   const clearAll = () => {
-    onSelectionChange([]);
+    console.log('Clear all languages');
+    
+    if (isAnimating) {
+      console.log('Animation in progress, ignoring clear all');
+      return;
+    }
+
+    setIsAnimating(true);
+    
+    try {
+      onSelectionChange([]);
+    } catch (error) {
+      console.error('Error in clearAll:', error);
+    } finally {
+      setTimeout(() => setIsAnimating(false), 100);
+    }
   };
 
   return (
     <div className="space-y-3">
-      {/* Selected Languages Display */}
+      {/* Selected Languages Display - Simplified without animations first */}
       {selectedLanguages.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, height: 0 }}
-          animate={{ opacity: 1, height: "auto" }}
-          exit={{ opacity: 0, height: 0 }}
-          className="flex flex-wrap gap-2 p-3 glass rounded-xl"
-        >
-          <AnimatePresence>
-            {selectedLanguageObjects.map((language, index) => (
-              <motion.div
-                key={language.code}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                transition={{ delay: index * 0.05 }}
-              >
+        <div className="flex flex-wrap gap-2 p-3 glass rounded-xl">
+          {selectedLanguageObjects.map((language, index) => {
+            if (!language || !language.code || !language.name) {
+              console.warn('Invalid language object:', language);
+              return null;
+            }
+            
+            return (
+              <div key={`${language.code}-${index}`}>
                 <Badge 
                   variant="secondary" 
                   className="flex items-center space-x-1 px-3 py-1 glass hover:bg-white/20 transition-colors"
@@ -104,16 +159,20 @@ export default function LanguageSelector({
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => removeLanguage(language.code)}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        removeLanguage(language.code);
+                      }}
                       className="h-4 w-4 p-0 ml-1 hover:bg-red-100 dark:hover:bg-red-900/30 rounded-full"
                     >
                       <X className="h-3 w-3 text-gray-500 hover:text-red-500" />
                     </Button>
                   )}
                 </Badge>
-              </motion.div>
-            ))}
-          </AnimatePresence>
+              </div>
+            );
+          })}
           {!singleSelect && selectedLanguages.length > 1 && (
             <Button
               variant="ghost"
@@ -124,7 +183,7 @@ export default function LanguageSelector({
               Clear all
             </Button>
           )}
-        </motion.div>
+        </div>
       )}
 
       {/* Language Selector */}
@@ -177,9 +236,14 @@ export default function LanguageSelector({
                 {filteredLanguages
                   .filter(Boolean)
                   .map((language) => {
-                    if (!language || !language.code || !language.name) return null;
+                    if (!language?.code || !language?.name) {
+                      console.warn('Invalid language in filter:', language);
+                      return null;
+                    }
+                    
                     const isSelected = selectedLanguages.includes(language.code);
                     const isDisabled = !isSelected && !singleSelect && selectedLanguages.length >= maxSelections;
+                    
                     return (
                       <CommandItem
                         key={language.code}
@@ -197,13 +261,9 @@ export default function LanguageSelector({
                           </div>
                         </div>
                         {isSelected && (
-                          <motion.div
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                          >
+                          <div>
                             <Check className="h-4 w-4 text-primary" />
-                          </motion.div>
+                          </div>
                         )}
                       </CommandItem>
                     );

@@ -14,6 +14,13 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false);
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupConfirm, setSignupConfirm] = useState("");
+  const [signupShowPassword, setSignupShowPassword] = useState(false);
+  const [signupFirstName, setSignupFirstName] = useState("");
+  const [signupLastName, setSignupLastName] = useState("");
   const { toast } = useToast();
 
   const loginMutation = useMutation({
@@ -34,6 +41,26 @@ export default function Login() {
     },
   });
 
+  const signupMutation = useMutation({
+    mutationFn: async (credentials: { email: string; password: string; firstName: string; lastName: string }) => {
+      const response = await apiRequest('POST', '/api/auth/register', credentials);
+      if (!response.ok) throw new Error((await response.json()).message || 'Registration failed');
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Auto-login after signup
+      localStorage.setItem('token', data.token);
+      window.location.href = '/';
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Sign up failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -47,6 +74,28 @@ export default function Login() {
     }
 
     loginMutation.mutate({ email, password });
+  };
+
+  const handleSignup = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!signupFirstName || !signupLastName || !signupEmail || !signupPassword || !signupConfirm) {
+      toast({
+        title: "Missing information",
+        description: "Please fill all fields",
+        variant: "destructive",
+      });
+      return;
+    }
+    if (signupPassword !== signupConfirm) {
+      toast({
+        title: "Passwords do not match",
+        description: "Please make sure your passwords match.",
+        variant: "destructive",
+      });
+      return;
+    }
+    signupMutation.mutate({ email: signupEmail, password: signupPassword, firstName: signupFirstName, lastName: signupLastName });
   };
 
   const handleDemoLogin = () => {
@@ -175,90 +224,224 @@ export default function Login() {
           <Card className="w-full max-w-md glass border-0 shadow-2xl">
             <CardHeader className="text-center pb-6">
               <CardTitle className="text-2xl font-bold">
-                Welcome Back
+                {isSignUp ? "Create New Account" : "Welcome Back"}
               </CardTitle>
               <p className="text-gray-600 dark:text-gray-400">
-                Sign in to continue your linguistic journey
+                {isSignUp ? "Sign up to get started" : "Sign in to continue your linguistic journey"}
               </p>
             </CardHeader>
             
             <CardContent className="space-y-6">
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="flex items-center">
-                    <Mail className="h-4 w-4 mr-2" />
-                    Email
-                  </Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="your@email.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="glass border-0 bg-white/50 dark:bg-gray-800/50"
-                    required
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="password" className="flex items-center">
-                    <Lock className="h-4 w-4 mr-2" />
-                    Password
-                  </Label>
-                  <div className="relative">
+              {isSignUp ? (
+                <form onSubmit={handleSignup} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-firstname" className="flex items-center">
+                      First Name
+                    </Label>
                     <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="glass border-0 bg-white/50 dark:bg-gray-800/50 pr-10"
+                      id="signup-firstname"
+                      type="text"
+                      placeholder="First Name"
+                      value={signupFirstName}
+                      onChange={(e) => setSignupFirstName(e.target.value)}
+                      className="glass border-0 bg-white/50 dark:bg-gray-800/50"
                       required
                     />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </Button>
                   </div>
-                </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-lastname" className="flex items-center">
+                      Last Name
+                    </Label>
+                    <Input
+                      id="signup-lastname"
+                      type="text"
+                      placeholder="Last Name"
+                      value={signupLastName}
+                      onChange={(e) => setSignupLastName(e.target.value)}
+                      className="glass border-0 bg-white/50 dark:bg-gray-800/50"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-email" className="flex items-center">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
+                    </Label>
+                    <Input
+                      id="signup-email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={signupEmail}
+                      onChange={(e) => setSignupEmail(e.target.value)}
+                      className="glass border-0 bg-white/50 dark:bg-gray-800/50"
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-password" className="flex items-center">
+                      <Lock className="h-4 w-4 mr-2" />
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="signup-password"
+                        type={signupShowPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={signupPassword}
+                        onChange={(e) => setSignupPassword(e.target.value)}
+                        className="glass border-0 bg-white/50 dark:bg-gray-800/50 pr-10"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                        onClick={() => setSignupShowPassword(!signupShowPassword)}
+                      >
+                        {signupShowPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="signup-confirm" className="flex items-center">
+                      <Lock className="h-4 w-4 mr-2" />
+                      Confirm Password
+                    </Label>
+                    <Input
+                      id="signup-confirm"
+                      type={signupShowPassword ? "text" : "password"}
+                      placeholder="••••••••"
+                      value={signupConfirm}
+                      onChange={(e) => setSignupConfirm(e.target.value)}
+                      className="glass border-0 bg-white/50 dark:bg-gray-800/50"
+                      required
+                    />
+                  </div>
+                  <Button
+                    type="submit"
+                    disabled={signupMutation.isPending}
+                    className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all duration-300"
+                  >
+                    {signupMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing Up...
+                      </>
+                    ) : (
+                      <>
+                        Sign Up
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex flex-col items-center gap-2 mt-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Already have an account?
+                      <button
+                        type="button"
+                        className="ml-1 text-blue-600 hover:underline dark:text-blue-400"
+                        onClick={() => setIsSignUp(false)}
+                      >
+                        Sign In
+                      </button>
+                    </span>
+                  </div>
+                </form>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="flex items-center">
+                      <Mail className="h-4 w-4 mr-2" />
+                      Email
+                    </Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="glass border-0 bg-white/50 dark:bg-gray-800/50"
+                      required
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="password" className="flex items-center">
+                      <Lock className="h-4 w-4 mr-2" />
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Input
+                        id="password"
+                        type={showPassword ? "text" : "password"}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="glass border-0 bg-white/50 dark:bg-gray-800/50 pr-10"
+                        required
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="absolute right-2 top-1/2 -translate-y-1/2 h-6 w-6 p-0"
+                        onClick={() => setShowPassword(!showPassword)}
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </Button>
+                    </div>
+                  </div>
 
-                <div className="flex items-center justify-between text-sm">
-                  <label className="flex items-center space-x-2">
-                    <input type="checkbox" className="rounded" />
-                    <span className="text-gray-600 dark:text-gray-400">Remember me</span>
-                  </label>
-                  <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
-                    Forgot password?
-                  </a>
-                </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <label className="flex items-center space-x-2">
+                      <input type="checkbox" className="rounded" />
+                      <span className="text-gray-600 dark:text-gray-400">Remember me</span>
+                    </label>
+                    {/* <a href="#" className="text-blue-600 hover:text-blue-700 dark:text-blue-400">
+                      Forgot password?
+                    </a> */}
+                  </div>
 
-                <Button
-                  type="submit"
-                  disabled={loginMutation.isPending}
-                  className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all duration-300"
-                >
-                  {loginMutation.isPending ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing In...
-                    </>
-                  ) : (
-                    <>
-                      Sign In
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </>
-                  )}
-                </Button>
-              </form>
+                  <Button
+                    type="submit"
+                    disabled={loginMutation.isPending}
+                    className="w-full gradient-primary text-white font-semibold py-3 rounded-xl hover:shadow-lg transition-all duration-300"
+                  >
+                    {loginMutation.isPending ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Signing In...
+                      </>
+                    ) : (
+                      <>
+                        Sign In
+                        <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                  <div className="flex flex-col items-center gap-2 mt-2">
+                    <span className="text-sm text-gray-600 dark:text-gray-400">
+                      Don't have an account?
+                      <button
+                        type="button"
+                        className="ml-1 text-blue-600 hover:underline dark:text-blue-400"
+                        onClick={() => setIsSignUp(true)}
+                      >
+                        Sign Up
+                      </button>
+                    </span>
+                  </div>
+                </form>
+              )}
 
               <div className="relative">
                 <Separator className="my-6" />

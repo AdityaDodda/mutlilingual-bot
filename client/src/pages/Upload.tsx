@@ -3,7 +3,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
 import Layout from "@/components/Layout";
 import FileUploader from "@/components/FileUploader";
-import LanguageSelector from "@/components/LanguageSelector";
+// Removed LanguageSelector as we are building a custom multi-select
+// import LanguageSelector from "@/components/LanguageSelector"; 
 import ConversionStatus from "@/components/ConversionStatus";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -22,10 +23,13 @@ import {
   Languages,
   Eye,
   ArrowRight,
-  Clock
+  Clock,
+  Check // Added Check icon for multi-select visual
 } from "lucide-react";
 import type { File } from "@/lib/types";
 import { SUPPORTED_LANGUAGES } from "@/lib/types";
+// Assuming you have a utility for merging class names (e.g., from shadcn/ui)
+// import { cn } from "@/lib/utils"; 
 
 export default function Upload() {
   const { user } = useAuth();
@@ -39,6 +43,8 @@ export default function Upload() {
   const [isConverting, setIsConverting] = useState(false);
   const [conversionJobId, setConversionJobId] = useState<number | null>(null);
   const [sourceLanguage, setSourceLanguage] = useState<string>("auto");
+
+  const MAX_TARGET_LANGUAGES = 10;
 
   const uploadMutation = useMutation({
     mutationFn: async (files: FileList) => {
@@ -73,6 +79,8 @@ export default function Upload() {
       }
 
       const results = [];
+      // This loop assumes a single conversion job ID per file. If your backend
+      // supports a single job for multiple files, you might adjust this.
       for (const file of uploadedFiles) {
         const response = await apiRequest('POST', `/api/files/${file.id}/convert`, {
           sourceLanguage,
@@ -87,8 +95,9 @@ export default function Upload() {
     },
     onSuccess: (data) => {
       setIsConverting(true);
+      // Assuming the first file's job ID is representative for the status check
       if (data.length > 0) {
-        setConversionJobId(data[0].jobId);
+        setConversionJobId(data[0].jobId); 
       }
       toast({
         title: "Conversion started",
@@ -111,6 +120,19 @@ export default function Upload() {
 
   const handleRemoveFile = (fileId: number) => {
     setUploadedFiles(prev => prev.filter(f => f.id !== fileId));
+  };
+
+  // New function to handle adding/removing target languages
+  const handleToggleTargetLanguage = (langCode: string) => {
+    setTargetLanguages(prev => {
+      if (prev.includes(langCode)) {
+        return prev.filter(code => code !== langCode);
+      } else if (prev.length < MAX_TARGET_LANGUAGES) {
+        return [...prev, langCode];
+      } else {
+        return prev;
+      }
+    });
   };
 
   const handleConvert = () => {
@@ -139,6 +161,9 @@ export default function Upload() {
     return (
       <Layout>
         <ConversionStatus 
+          // Note: ConversionStatus currently takes a single fileId. 
+          // If you support multiple files being converted simultaneously, 
+          // you might need to adjust ConversionStatus or pass a list of IDs.
           fileId={uploadedFiles[0]?.id} 
           onComplete={() => {
             setIsConverting(false);
@@ -185,18 +210,8 @@ export default function Upload() {
                 onUpload={handleFileUpload}
                 isUploading={uploadMutation.isPending}
               />
-              {/* Source Language Selector */}
-              {/* <div className="mt-6">
-                <label className="block font-semibold mb-2">Source Language</label>
-                <LanguageSelector
-                  selectedLanguages={[sourceLanguage]}
-                  onSelectionChange={([lang]) => setSourceLanguage(lang)}
-                  singleSelect
-                  includeAutoDetect
-                  placeholder="Select source language..."
-                />
-                <p className="text-xs text-gray-500 mt-1">Let the system detect the source language automatically, or pick one to override.</p>
-              </div> */}
+              
+              {/* Source Language Selector (Existing) */}
               <div className="mt-6">
                 <label className="block font-semibold mb-2">Source Language</label>
                 <Select value={sourceLanguage} onValueChange={setSourceLanguage}>
@@ -221,15 +236,66 @@ export default function Upload() {
                   </SelectContent>
                 </Select>
               </div>
+
               {/* Target Language Selector */}
               <div className="mt-6">
-                <label className="block font-semibold mb-2">Target Languages</label>
-                <LanguageSelector
-                  selectedLanguages={targetLanguages}
-                  onSelectionChange={setTargetLanguages}
-                  maxSelections={10}
-                  placeholder="Select target languages..."
-                />
+                <div className="flex items-center justify-between mb-2">
+                  <label className="block font-semibold">Target Languages</label>
+                  <span className="text-xs text-gray-500">Max {MAX_TARGET_LANGUAGES}</span>
+                </div>
+                {/* 
+                  We are using the ShadCN `Select` component for its Trigger and Content structure.
+                  However, the actual multi-select logic is handled manually within the SelectContent 
+                  using custom divs instead of `SelectItem` to prevent closing on each click.
+                */}
+                <Select>
+                  <SelectTrigger className="w-full glass border-0 min-h-[40px]"> {/* min-h for consistent height */}
+                    {targetLanguages.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 py-1 px-1"> {/* Added padding for visual alignment */}
+                        {targetLanguages.slice(0, 3).map(code => { // Display up to 3 badges
+                          const lang = SUPPORTED_LANGUAGES.find(l => l.code === code);
+                          return lang ? (
+                            <Badge key={code} variant="secondary" className="pr-1 text-sm">
+                              <span className="mr-1 text-base">{lang.flag}</span>{lang.name}
+                            </Badge>
+                          ) : null;
+                        })}
+                        {targetLanguages.length > 3 && ( // Indicate if more languages are selected
+                          <Badge variant="outline" className="text-gray-500 text-sm">
+                            +{targetLanguages.length - 3} more
+                          </Badge>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-gray-500">Select target languages...</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent className="glass max-h-60 overflow-y-auto">
+                    {SUPPORTED_LANGUAGES.map((language) => {
+                      const isSelected = targetLanguages.includes(language.code);
+                      const isDisabled = !isSelected && targetLanguages.length >= MAX_TARGET_LANGUAGES;
+                      return (
+                        <div 
+                          key={language.code}
+                          // Replicating ShadCN SelectItem styling for visual consistency
+                          className={`relative flex cursor-default select-none items-center rounded-sm py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50 hover:bg-accent ${isDisabled ? 'opacity-50 pointer-events-none' : ''}`}
+                          onClick={(e) => {
+                            e.preventDefault(); // Prevents any default browser behavior, though not strictly needed here for Select behavior
+                            if (!isDisabled) handleToggleTargetLanguage(language.code);
+                          }}
+                        >
+                          <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+                            {isSelected && (
+                              <Check className="h-4 w-4" />
+                            )}
+                          </span>
+                          <span className="mr-3 text-lg">{language.flag}</span>
+                          <span>{language.name}</span>
+                        </div>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
               </div>
               
               {uploadedFiles.length > 0 && (

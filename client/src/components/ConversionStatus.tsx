@@ -35,7 +35,7 @@ const STATUS_STEPS = [
 export default function ConversionStatus({ 
   fileId, 
   onComplete,
-  refreshInterval = 2000 
+  refreshInterval = 20000
 }: ConversionStatusProps) {
   const [currentStep, setCurrentStep] = useState(0);
 
