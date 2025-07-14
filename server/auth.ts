@@ -5,6 +5,9 @@ export interface AuthenticatedRequest extends Request {
   user?: {
     id: string;
     email: string;
+    firstName?: string;
+    lastName?: string;
+    // profileImageUrl?: string;
     claims?: {
       sub: string;
     };
@@ -26,6 +29,9 @@ export const authenticateToken = async (req: AuthenticatedRequest, res: Response
         req.user = {
           id: user.id,
           email: user.email!,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          // profileImageUrl: user.profileImageUrl,
           claims: { sub: user.id }
         };
         return next();

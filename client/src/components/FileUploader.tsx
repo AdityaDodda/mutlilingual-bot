@@ -48,13 +48,13 @@ export default function FileUploader({
   maxFiles = 10,
   maxFileSize = 100 * 1024 * 1024, // 100MB
   acceptedTypes = [
-    'application/pdf',
-    'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+    // 'application/pdf',
+    // 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-    'audio/mpeg',
-    'audio/wav',
-    'video/mp4',
-    'video/avi',
+    // 'audio/mpeg',
+    // 'audio/wav',
+    // 'video/mp4',
+    // 'video/avi',
   ]
 }: FileUploaderProps) {
   const [isDragOver, setIsDragOver] = useState(false);
@@ -215,7 +215,7 @@ export default function FileUploader({
           </Button>
           
           <p className="text-sm text-gray-500 dark:text-gray-400 mt-4">
-            Supports: PDF, DOCX, PPTX, MP3, MP4, WAV, AVI (Max {maxFileSize / 1024 / 1024}MB each)
+            Supports: PPTX{/* PDF, DOCX, MP3, MP4, WAV, AVI (Max {maxFileSize / 1024 / 1024}MB each)*/}
           </p>
         </CardContent>
       </Card>

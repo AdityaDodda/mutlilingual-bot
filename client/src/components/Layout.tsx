@@ -95,11 +95,9 @@ export default function Layout({ children }: LayoutProps) {
             
             {/* User Profile */}
             <div className="hidden md:flex items-center space-x-3">
-              <img
-                src={user?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150"}
-                alt="Profile"
-                className="w-8 h-8 rounded-full object-cover"
-              />
+              <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white font-bold text-lg uppercase">
+                {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+              </div>
               <div className="text-sm">
                 <p className="font-medium text-gray-800 dark:text-white">
                   {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User'}
@@ -169,11 +167,9 @@ export default function Layout({ children }: LayoutProps) {
                 {/* Mobile User Section */}
                 <div className="border-t border-white/20 dark:border-gray-700/20 pt-4 mt-4">
                   <div className="flex items-center space-x-3 px-4 py-3">
-                    <img
-                      src={user?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150"}
-                      alt="Profile"
-                      className="w-10 h-10 rounded-full object-cover"
-                    />
+                    <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-xl uppercase">
+                      {user?.firstName ? user.firstName.charAt(0).toUpperCase() : 'U'}
+                    </div>
                     <div>
                       <p className="font-medium text-gray-800 dark:text-white">
                         {user?.firstName ? `${user.firstName} ${user.lastName || ''}`.trim() : 'User'}

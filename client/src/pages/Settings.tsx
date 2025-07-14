@@ -163,13 +163,13 @@ export default function Settings() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="flex items-center space-x-4 mb-6">
-                <img
+                {/* <img
                   src={user?.profileImageUrl || "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?ixlib=rb-4.0.3&auto=format&fit=crop&w=150&h=150"}
                   alt="Profile"
                   className="w-16 h-16 rounded-full object-cover"
-                />
+                /> */}
                 <div>
-                  <h3 className="font-semibold">Profile Picture</h3>
+                  {/* <h3 className="font-semibold">Profile Picture</h3> */}
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Managed through your authentication provider
                   </p>
