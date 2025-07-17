@@ -66,30 +66,28 @@ export default function FileUploader({
     const validFiles: File[] = [];
     const newErrors: string[] = [];
 
-    Array.from(files).forEach((file) => {
+    // Only allow the first file
+    const fileArray = Array.from(files).slice(0, 1);
+    fileArray.forEach((file) => {
       // Check file type
       if (!acceptedTypes.includes(file.type)) {
         newErrors.push(`${file.name}: Unsupported file type`);
         return;
       }
-
       // Check file size
       if (file.size > maxFileSize) {
         newErrors.push(`${file.name}: File too large (max ${maxFileSize / 1024 / 1024}MB)`);
         return;
       }
-
       validFiles.push(file);
     });
-
-    // Check total file count
-    if (selectedFiles.length + validFiles.length > maxFiles) {
-      newErrors.push(`Maximum ${maxFiles} files allowed`);
+    // Only allow one file in total
+    if (selectedFiles.length + validFiles.length > 1) {
+      newErrors.push(`Only one file allowed`);
       return { valid: [], errors: newErrors };
     }
-
     return { valid: validFiles, errors: newErrors };
-  }, [acceptedTypes, maxFileSize, maxFiles, selectedFiles.length]);
+  }, [acceptedTypes, maxFileSize, selectedFiles.length]);
 
   const handleFileSelect = useCallback((files: FileList) => {
     const { valid, errors } = validateFiles(files);
@@ -223,7 +221,6 @@ export default function FileUploader({
       <input
         ref={fileInputRef}
         type="file"
-        multiple
         accept={acceptedTypes.join(',')}
         onChange={handleInputChange}
         className="hidden"

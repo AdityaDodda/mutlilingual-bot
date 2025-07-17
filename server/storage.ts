@@ -14,6 +14,9 @@ import {
   type ConversionJob,
   type InsertUserPreferences,
   type UserPreferences,
+  translationLogs,
+  type InsertTranslationLog,
+  type TranslationLog,
 } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, and, inArray } from "drizzle-orm";
@@ -54,6 +57,8 @@ export interface IStorage {
   // User preferences operations
   getUserPreferences(userId: string): Promise<UserPreferences | undefined>;
   upsertUserPreferences(preferences: InsertUserPreferences): Promise<UserPreferences>;
+  createTranslationLog(log: InsertTranslationLog): Promise<TranslationLog>;
+  getTranslationLogByConvertedFileId(convertedFileId: number): Promise<TranslationLog | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -240,6 +245,15 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return upsertedPreferences;
+  }
+
+  async createTranslationLog(log: InsertTranslationLog): Promise<TranslationLog> {
+    const [newLog] = await db.insert(translationLogs).values(log).returning();
+    return newLog;
+  }
+  async getTranslationLogByConvertedFileId(convertedFileId: number): Promise<TranslationLog | undefined> {
+    const [log] = await db.select().from(translationLogs).where(eq(translationLogs.convertedFileId, convertedFileId));
+    return log;
   }
 }
 

@@ -17,7 +17,8 @@ import {
   Music,
   Video,
   Presentation,
-  File as FileIcon
+  File as FileIcon,
+  Loader2
 } from 'lucide-react';
 import type { File, ConvertedFile } from '@/lib/types';
 
@@ -28,6 +29,9 @@ interface AssetCardProps {
   onDelete: () => void;
   onShare?: () => void;
   isDeleting?: boolean;
+  onDownloadLog?: () => void;
+  isDownloadingLog?: boolean;
+  isDownloading?: boolean;
 }
 
 const FILE_TYPE_ICONS = {
@@ -81,7 +85,10 @@ export default function AssetCard({
   onDownload, 
   onDelete, 
   onShare,
-  isDeleting = false 
+  isDeleting = false,
+  onDownloadLog,
+  isDownloadingLog = false,
+  isDownloading = false
 }: AssetCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [imageLoaded, setImageLoaded] = useState(false);
@@ -267,10 +274,31 @@ export default function AssetCard({
                   variant="ghost"
                   size="sm"
                   onClick={onDownload}
-                  className="text-gray-600 dark:text-gray-400 hover:text-primary"
+                  disabled={isDeleting || isDownloading}
                 >
-                  <Download className="h-4 w-4" />
+                  {isDownloading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Download className="mr-2 h-4 w-4" />
+                  )}
+                  Download
                 </Button>
+                
+                {file.type === 'converted' && onDownloadLog && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onDownloadLog}
+                    disabled={isDeleting || isDownloadingLog}
+                  >
+                    {isDownloadingLog ? (
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                      <Download className="mr-2 h-4 w-4" />
+                    )}
+                    Log
+                  </Button>
+                )}
                 
                 {onShare && (
                   <Button

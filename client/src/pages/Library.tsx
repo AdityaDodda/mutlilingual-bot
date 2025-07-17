@@ -30,7 +30,8 @@ export default function Library() {
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [selectedFile, setSelectedFile] = useState<File | ConvertedFile | null>(null);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
-  const [downloadingId, setDownloadingId] = useState<number | null>(null);
+  const [downloadingFileId, setDownloadingFileId] = useState<number | null>(null);
+  const [downloadingLogId, setDownloadingLogId] = useState<number | null>(null);
 
   const { data: filesData, isLoading: isLoadingFiles, error: filesError } = useQuery({
     queryKey: ["/api/files"],
@@ -140,7 +141,7 @@ export default function Library() {
       return;
     }
 
-    setDownloadingId(file.id);
+    setDownloadingFileId(file.id);
     toast({
       title: "Preparing download...",
       description: `Your download for ${file.originalName || file.filename} will begin shortly.`,
@@ -177,7 +178,52 @@ export default function Library() {
         variant: "destructive",
       });
     } finally {
-      setDownloadingId(null);
+      setDownloadingFileId(null);
+    }
+  };
+
+  const handleDownloadLog = async (file: any) => {
+    if (!file || typeof file.id !== 'number' || file.type !== 'converted') {
+      toast({
+        title: "Invalid File",
+        description: "Cannot download the translation log for this item.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setDownloadingLogId(file.id);
+    toast({
+      title: "Preparing log download...",
+      description: `Your download for the translation log of ${file.originalName || file.filename} will begin shortly.`,
+    });
+    try {
+      const endpoint = `/api/files/converted/${file.id}/log`;
+      const token = localStorage.getItem('token');
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error('Failed to download log');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      const downloadName = `translation_log_${file.filename.replace('converted_', '').replace('.pptx', '')}.txt`;
+      link.setAttribute('download', downloadName);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error: any) {
+      console.error("Log download failed:", error);
+      toast({
+        title: "Log Download Failed",
+        description: error.message || "Could not download the translation log. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloadingLogId(null);
     }
   };
 
@@ -344,6 +390,9 @@ export default function Library() {
                       onDownload={() => handleDownload(file)}
                       onDelete={() => handleDelete(file.id)}
                       isDeleting={deleteMutation.isPending}
+                      onDownloadLog={file.type === 'converted' ? () => handleDownloadLog(file) : undefined}
+                      isDownloading={downloadingFileId === file.id}
+                      isDownloadingLog={file.type === 'converted' && downloadingLogId === file.id}
                     />
                   </motion.div>
                 ))}
@@ -383,11 +432,16 @@ export default function Library() {
                       <Button variant="ghost" size="sm" onClick={() => handlePreview(file)}>
                         Preview
                       </Button>
-                      <Button variant="ghost" size="sm" onClick={() => handleDownload(file)} disabled={downloadingId === file.id}>
-                         {downloadingId === file.id ? (
+                      <Button variant="ghost" size="sm" onClick={() => handleDownload(file)} disabled={downloadingFileId === file.id}>
+                         {downloadingFileId === file.id ? (
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             ) : (
                             <Download className="mr-2 h-4 w-4" />)}Download</Button>
+                      {file.type === 'converted' && (
+                        <Button variant="ghost" size="sm" onClick={() => handleDownloadLog(file)} disabled={downloadingLogId === file.id}>
+                          {downloadingLogId === file.id ? (<Loader2 className="mr-2 h-4 w-4 animate-spin" />) : (<Download className="mr-2 h-4 w-4" />)}Translation Log
+                        </Button>
+                      )}
                       <Button 
                         variant="ghost" 
                         size="sm" 

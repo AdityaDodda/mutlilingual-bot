@@ -93,6 +93,15 @@ export const userPreferences = pgTable("user_preferences", {
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
+// Translation logs table for storing translation logs
+export const translationLogs = pgTable("translation_logs", {
+  id: serial("id").primaryKey(),
+  convertedFileId: integer("converted_file_id").notNull().references(() => convertedFiles.id, { onDelete: "cascade" }),
+  logFilename: varchar("log_filename").notNull(),
+  downloadUrl: varchar("download_url").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Insert schemas
 export const insertFileSchema = createInsertSchema(files).omit({
   id: true,
@@ -127,3 +136,5 @@ export type InsertConversionJob = z.infer<typeof insertConversionJobSchema>;
 export type ConversionJob = typeof conversionJobs.$inferSelect;
 export type InsertUserPreferences = z.infer<typeof insertUserPreferencesSchema>;
 export type UserPreferences = typeof userPreferences.$inferSelect;
+export type InsertTranslationLog = typeof translationLogs.$inferInsert;
+export type TranslationLog = typeof translationLogs.$inferSelect;

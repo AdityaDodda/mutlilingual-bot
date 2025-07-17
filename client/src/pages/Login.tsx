@@ -428,7 +428,7 @@ export default function Login() {
                       </>
                     )}
                   </Button>
-                  <div className="flex flex-col items-center gap-2 mt-2">
+                  {/* <div className="flex flex-col items-center gap-2 mt-2">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
                       Don't have an account?
                       <button
@@ -439,7 +439,7 @@ export default function Login() {
                         Sign Up
                       </button>
                     </span>
-                  </div>
+                  </div> */}
                 </form>
               )}
 

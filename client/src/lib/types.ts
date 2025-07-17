@@ -37,6 +37,15 @@ export interface ConversionJob {
   createdAt: string;
 }
 
+
+export interface TranslationLog {
+  id: number;
+  convertedFileId: number;
+  logFilename: string;
+  downloadUrl: string;
+  createdAt: string;
+}
+
 export interface User {
   id: string;
   email?: string;

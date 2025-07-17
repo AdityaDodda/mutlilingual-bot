@@ -198,7 +198,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/files/:id/convert', authenticateToken, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       const { targetLanguages, outputFormat, preserveFormatting } = req.body;
 
       // Validate request
@@ -234,7 +234,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         const outputPath = path.join(__dirname, '..', 'uploads', outputFilename);
         await runPythonConversion(inputPath, outputPath, targetLang);
         const stats = fs.statSync(outputPath);
-        await storage.createConvertedFile({
+        const newConvertedFile = await storage.createConvertedFile({
           originalFileId: fileId,
           targetLanguage: targetLang,
           filename: outputFilename,
@@ -242,6 +242,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
           size: stats.size,
           downloadUrl: `/uploads/${outputFilename}`,
         });
+        const logFilename = `translation_log_${outputFilename.replace('converted_', '').replace('.pptx', '')}.txt`;
+        const logPath = path.join(__dirname, '..', 'uploads', logFilename);
+        console.log('Looking for log file:', logPath);
+        if (fs.existsSync(logPath)) {
+          console.log('Log file found, inserting into DB:', logFilename);
+          await storage.createTranslationLog({
+            convertedFileId: newConvertedFile.id,
+            logFilename,
+            downloadUrl: `/uploads/${logFilename}`,
+          });
+          console.log('Inserted translation log for converted file:', newConvertedFile.id);
+        } else {
+          console.log('Log file NOT found:', logPath);
+        }
       }
       await storage.updateFileStatus(fileId, "completed", 100);
       res.json({ message: "Conversion started", jobId: job.id });
@@ -255,7 +269,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/files/:id/status', authenticateToken, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
 
       const file = await storage.getFile(fileId);
       if (!file || file.userId !== userId) {
@@ -281,7 +295,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get user's files
   app.get('/api/files', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       const files = await storage.getFilesByUser(userId);
       res.json({ files });
     } catch (error) {
@@ -293,7 +307,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get converted files for a user
   app.get('/api/files/converted', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       const convertedFiles = await storage.getConvertedFilesByUser(userId);
       res.json({ convertedFiles });
     } catch (error) {
@@ -306,7 +320,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 app.get('/api/files/:id/download', authenticateToken, async (req: any, res) => {
   try {
     const fileId = parseInt(req.params.id);
-    const userId = req.user.claims.sub;
+    const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
 
     const file = await storage.getFile(fileId); // Assuming storage.getFile finds an original file
 
@@ -338,7 +352,7 @@ app.get('/api/files/:id/download', authenticateToken, async (req: any, res) => {
 app.get('/api/files/converted/:id/download', authenticateToken, async (req: any, res) => {
   try {
     const convertedFileId = parseInt(req.params.id);
-    const userId = req.user.claims.sub;
+    const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
 
     // You need a way to get a converted file and check its ownership
     // This might involve joining with the original file's table
@@ -372,11 +386,46 @@ app.get('/api/files/converted/:id/download', authenticateToken, async (req: any,
   }
 });
 
+// Download a translation log for a converted file
+app.get('/api/files/converted/:id/log', authenticateToken, async (req, res) => {
+  try {
+    const convertedFileId = parseInt(req.params.id);
+    const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
+
+    const convertedFile = await storage.getConvertedFile(convertedFileId);
+    if (!convertedFile) return res.status(404).json({ message: "Converted file not found." });
+    const originalFile = await storage.getFile(convertedFile.originalFileId);
+    if (!originalFile || originalFile.userId !== userId) {
+      return res.status(404).json({ message: "File not found or you don't have permission." });
+    }
+
+    // Find translation log entry
+    const logEntry = await storage.getTranslationLogByConvertedFileId(convertedFileId);
+    if (!logEntry) return res.status(404).json({ message: "Translation log not found." });
+
+    const logPath = path.join(__dirname, '..', 'uploads', logEntry.logFilename);
+    if (!fs.existsSync(logPath)) {
+      return res.status(404).json({ message: "Translation log file not found." });
+    }
+    res.download(logPath, logEntry.logFilename, (err) => {
+      if (err) {
+        console.error("Error downloading translation log:", err);
+        if (!res.headersSent) {
+          res.status(500).send("Could not download the translation log.");
+        }
+      }
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error while downloading translation log." });
+  }
+});
+
   // Delete file
   app.delete('/api/files/:id', authenticateToken, async (req: any, res) => {
     try {
       const fileId = parseInt(req.params.id);
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
 
       const file = await storage.getFile(fileId);
       if (!file || file.userId !== userId) {
@@ -394,7 +443,7 @@ app.get('/api/files/converted/:id/download', authenticateToken, async (req: any,
   // User preferences endpoints
   app.get('/api/preferences', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       const preferences = await storage.getUserPreferences(userId);
       res.json({ preferences });
     } catch (error) {
@@ -405,7 +454,7 @@ app.get('/api/files/converted/:id/download', authenticateToken, async (req: any,
 
   app.put('/api/preferences', authenticateToken, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = (req.user as any)?.claims?.sub || (req.user as any)?.id;
       const preferencesData = { ...req.body, userId };
       
       const validatedData = insertUserPreferencesSchema.parse(preferencesData);
