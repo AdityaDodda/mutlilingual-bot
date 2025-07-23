@@ -33,6 +33,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/", icon: Home },
     { name: "Upload", href: "/upload", icon: Upload },
+    { name: "Text Translate", href: "/text-translate", icon: Languages },
     { name: "Library", href: "/library", icon: FolderOpen },
     { name: "Settings", href: "/settings", icon: Settings },
   ];

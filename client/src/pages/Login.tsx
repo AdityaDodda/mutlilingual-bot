@@ -443,7 +443,7 @@ export default function Login() {
                 </form>
               )}
 
-              <div className="relative">
+              {/* <div className="relative">
                 <Separator className="my-6" />
                 <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white dark:bg-gray-800 px-3 text-sm text-gray-600 dark:text-gray-400">
                   or try demo
@@ -458,7 +458,7 @@ export default function Login() {
               >
                 <Users className="mr-2 h-4 w-4" />
                 Demo Login
-              </Button>
+              </Button> */}
             </CardContent>
           </Card>
         </motion.div>

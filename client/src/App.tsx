@@ -13,6 +13,7 @@ import Library from "@/pages/Library";
 import Settings from "@/pages/Settings";
 // import NotFound from "@/pages/not-found";
 import Features from "@/pages/Features";
+import TextTranslate from "@/pages/TextTranslate";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -33,6 +34,7 @@ function Router() {
           <Route path="/features" component={Features} />
           <Route path="/home" component={Home} />
           <Route path="/upload" component={Upload} />
+          <Route path="/text-translate" component={TextTranslate} />
           <Route path="/library" component={Library} />
           <Route path="/settings" component={Settings} />
         </>

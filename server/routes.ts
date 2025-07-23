@@ -477,6 +477,37 @@ app.get('/api/logout', (_req, res) => {
   res.status(200).json({ message: 'Logged out successfully' });
 });
 
+app.post('/api/translate-text', async (req, res) => {
+  try {
+    const schema = z.object({
+      text: z.string().min(1),
+      targetLang: z.string().min(1),
+      sourceLang: z.string().optional(),
+    });
+    const { text, targetLang, sourceLang } = schema.parse(req.body);
+    const scriptPath = path.join(__dirname, '..', 'scripts', 'Text Translation.py');
+    const args = [scriptPath, text, targetLang];
+    if (sourceLang) args.push(sourceLang);
+    const pythonProcess = spawn('python', args, { env: { ...process.env, PYTHONIOENCODING: 'utf-8' } });
+    let output = '';
+    let error = '';
+    pythonProcess.stdout.on('data', (data) => {
+      output += data.toString();
+    });
+    pythonProcess.stderr.on('data', (data) => {
+      error += data.toString();
+    });
+    pythonProcess.on('close', (code) => {
+      if (code === 0) {
+        res.json({ translated: output.trim() });
+      } else {
+        res.status(500).json({ error: error || 'Translation failed' });
+      }
+    });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
 
   const httpServer = createServer(app);
   return httpServer;
@@ -496,7 +527,7 @@ const pythonExecutable = path.join(__dirname, '..', 'multi', 'scripts', 'python.
 async function runPythonConversion(inputPath, outputPath, targetLang) {
   return new Promise((resolve, reject) => {
     const pythonProcess = spawn(pythonExecutable, [
-      'PPT Translation.py',
+      'scripts/PPT Translation.py',
       inputPath,
       outputPath,
       targetLang

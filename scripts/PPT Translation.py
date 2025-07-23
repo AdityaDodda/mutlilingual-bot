@@ -10,7 +10,7 @@ from datetime import datetime
 import os
 import deepl
  
-DEEPL_API_KEY = "04a5a7ce-543e-447f-a2b3-1a8f0bdc9e2a:fx"  # <-- Replace with your actual key
+DEEPL_API_KEY = "10c68e12-3700-4aa2-9b08-88565359ad25:fx"  # <-- Replace with your actual key
 deepl_translator = deepl.Translator(DEEPL_API_KEY)
  
 warnings.filterwarnings('ignore', message='Could not copy all formatting properties')
