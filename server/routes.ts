@@ -242,10 +242,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
           size: stats.size,
           downloadUrl: `/uploads/${outputFilename}`,
         });
-        const logFilename = `translation_log_${outputFilename.replace('converted_', '').replace('.pptx', '')}.txt`;
-        const logPath = path.join(__dirname, '..', 'uploads', logFilename);
-        console.log('Looking for log file:', logPath);
-        if (fs.existsSync(logPath)) {
+        // Try both log filename patterns
+        const logNamePart = outputFilename.replace('converted_', '').replace('.pptx', '');
+        const logFilename1 = `translation_log_${logNamePart}.txt`;
+        const logFilename2 = `translation_log_converted_${logNamePart}.txt`;
+        const logPath1 = path.join(__dirname, '..', 'uploads', logFilename1);
+        const logPath2 = path.join(__dirname, '..', 'uploads', logFilename2);
+        let logFilename = null;
+        if (fs.existsSync(logPath1)) {
+          logFilename = logFilename1;
+        } else if (fs.existsSync(logPath2)) {
+          logFilename = logFilename2;
+        }
+        if (logFilename) {
           console.log('Log file found, inserting into DB:', logFilename);
           await storage.createTranslationLog({
             convertedFileId: newConvertedFile.id,
@@ -254,7 +263,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
           console.log('Inserted translation log for converted file:', newConvertedFile.id);
         } else {
-          console.log('Log file NOT found:', logPath);
+          console.log('Log file NOT found:', logPath1, 'or', logPath2);
         }
       }
       await storage.updateFileStatus(fileId, "completed", 100);
@@ -522,7 +531,7 @@ async function detectLanguage(file: Express.Multer.File): Promise<string> {
   return "en"; // Default to English
 }
 
-const pythonExecutable = path.join(__dirname, '..', 'multi', 'scripts', 'python.exe');
+const pythonExecutable = path.join(__dirname, '..', '.venv', 'scripts', 'python.exe');
 
 async function runPythonConversion(inputPath, outputPath, targetLang) {
   return new Promise((resolve, reject) => {
