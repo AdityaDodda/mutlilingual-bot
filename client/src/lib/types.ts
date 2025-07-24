@@ -87,7 +87,7 @@ export const SUPPORTED_LANGUAGES: Language[] = [
   { code: "pt", name: "Portuguese", flag: "🇵🇹" },
   { code: "ja", name: "Japanese", flag: "🇯🇵" },
   { code: "ko", name: "Korean", flag: "🇰🇷" },
-  { code: "en", name: "English", flag: "🇬🇧" },
+  { code: "en-US", name: "English (American)", flag: "🇺🇸" },
   { code: "zh-CN", name: "Chinese (Simplified)", flag: "🇨🇳" },
   { code: "zh-TW", name: "Chinese (Traditional)", flag: "🇹🇼" },
   { code: "ar", name: "Arabic", flag: "🇸🇦" },
